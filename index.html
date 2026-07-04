@@ -14,6 +14,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen antialiased">
 
+    <!-- AUTHENTICATION SCREEN -->
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md">
             <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight text-center">WealthFlow Cloud</h2>
@@ -33,13 +34,20 @@
         </div>
     </div>
 
+    <!-- MAIN APP SCREEN -->
     <div id="app-screen" class="hidden max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+        <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-5 border-b border-slate-200">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">WealthFlow</h1>
                 <p id="user-display" class="text-xs font-semibold text-emerald-600 mt-0.5"><i class="fa-solid fa-cloud"></i> Connected Live</p>
             </div>
-            <div class="flex gap-2 w-full md:w-auto">
+            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                <!-- NEW IMPORT BUTTON -->
+                <label class="cursor-pointer bg-amber-500 active:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-import"></i> Import JSON
+                    <input type="file" id="json-import-file" accept=".json" class="hidden" onchange="importOldJSON(event)">
+                </label>
                 <button onclick="openAccountModal()" class="flex-1 md:flex-none bg-blue-600 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> Account
                 </button>
@@ -49,6 +57,7 @@
             </div>
         </header>
 
+        <!-- Main Layout Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <aside class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -100,21 +109,23 @@
         </div>
     </div>
 
+    <!-- Floating Trigger -->
     <div class="sm:hidden fixed bottom-5 right-5 z-40">
         <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
     </div>
 
+    <!-- MODALS -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 id="account-modal-title" class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
             <form id="account-form" onsubmit="saveAccount(event)">
                 <input type="hidden" id="account-id">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Name</label>
-                        <input type="text" id="account-name" required placeholder="e.g., Personal Wallet" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                        <input type="text" id="account-name" required class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
-                    <div id="initial-funds-group">
+                    <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Starting Balance ($)</label>
                         <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
@@ -145,7 +156,7 @@
 
     <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 id="expense-modal-title" class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
             <form id="expense-form" onsubmit="saveExpense(event)">
                 <input type="hidden" id="expense-id">
                 <div class="space-y-4">
@@ -179,10 +190,11 @@
         </div>
     </div>
 
+    <!-- ENGINE CODE CONNECTION -->
     <script>
         // ================= CONFIGURE KEYS HERE =================
         const SUPABASE_URL = 'https://tddhakuikdnmbouxxxww.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZGhha3Vpa2RubWJvdXh4eHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMzkzNzIsImV4cCI6MjA5ODcxNTM3Mn0.Z4ERReRtCUYqi85JDrAdm1NDaYjxWdmAIGA32EW5HYc';
+        const SUPABASE_ANON_KEY = 'eyJhYmdjOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZGhha3Vpa2RubWJvdXh4eHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMzkzNzIsImV4cCI6MjA5ODcxNTM3Mn0.Z4ERReRtCUYqi85JDrAdm1NDaYjxWdmAIGA32EW5HYc';
         // =======================================================
 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -191,7 +203,6 @@
 
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-        // AUTH OPERATION INITIALIZER
         _supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 currentUser = session.user;
@@ -210,16 +221,13 @@
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             const btn = document.getElementById('auth-btn');
+            if (password.length < 6) { alert("Password must be at least 6 characters long!"); return; }
             btn.disabled = true; btn.innerText = "Connecting Framework...";
 
-            // Attempt Sign In
             let { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-            
-            // If account doesn't exist, automatically Sign Them Up!
             if (error && error.message.includes("Invalid login credentials")) {
                 let signUp = await _supabase.auth.signUp({ email, password });
-                if (signUp.error) { alert(signUp.error.message); btn.disabled = false; btn.innerText = "Sign In / Sign Up"; } 
-                else { alert("Account created! Logging you in seamlessly."); }
+                if (signUp.error) { alert(signUp.error.message); btn.disabled = false; btn.innerText = "Sign In / Sign Up"; }
             } else if (error) {
                 alert(error.message); btn.disabled = false; btn.innerText = "Sign In / Sign Up";
             }
@@ -227,30 +235,84 @@
 
         async function handleSignOut() { await _supabase.auth.signOut(); }
 
-        // DATA RETRIEVAL CORE ENGINE
+        // EXPLICIT JSON CLOUD MIGRATION CORE
+        async function importOldJSON(event) {
+            const file = event.target.files[0];
+            if (!file || !currentUser) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+                    const incomingAccounts = parsedData.accounts || [];
+
+                    if (incomingAccounts.length === 0) {
+                        alert("No valid account rows found in JSON template.");
+                        return;
+                    }
+
+                    if (!confirm(`Found ${incomingAccounts.length} accounts to parse. Proceed migrating rows directly into Supabase live?`)) return;
+
+                    for (const oldAcc of incomingAccounts) {
+                        const newAccId = 'acc_' + Math.random().toString(36).substring(2, 9);
+                        
+                        // Push Account to Supabase
+                        const { error: accErr } = await _supabase.from('accounts').insert([{
+                            id: newAccId,
+                            name: oldAcc.name || "Imported Account",
+                            funds: parseFloat(oldAcc.funds) || 0,
+                            user_id: currentUser.id
+                        }]);
+
+                        if (accErr) throw accErr;
+
+                        // Push Matching Expenses to Supabase
+                        if (oldAcc.expenses && oldAcc.expenses.length > 0) {
+                            const expenseBatch = oldAcc.expenses.map(exp => ({
+                                id: 'exp_' + Math.random().toString(36).substring(2, 9),
+                                account_id: newAccId,
+                                category: exp.category || "Shopping",
+                                amount: parseFloat(exp.amount) || 0,
+                                date: exp.date || new Date().toISOString().split('T')[0],
+                                user_id: currentUser.id
+                            }));
+
+                            const { error: expErr } = await _supabase.from('expenses').insert(expenseBatch);
+                            if (expErr) throw expErr;
+                        }
+                    }
+
+                    alert("Cloud migration successful! All historical rows synced.");
+                    pullDatabaseData();
+                } catch (err) {
+                    alert("Migration Crash: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
         async function pullDatabaseData() {
             if (!currentUser) return;
+            try {
+                const { data: accounts, error: accErr } = await _supabase.from('accounts').select('*');
+                const { data: expenses, error: expErr } = await _supabase.from('expenses').select('*');
 
-            const { data: accounts, error: accErr } = await _supabase.from('accounts').select('*');
-            const { data: expenses, error: expErr } = await _supabase.from('expenses').select('*');
+                if (accErr) throw accErr;
+                if (expErr) throw expErr;
 
-            if (accErr || expErr) return console.error("Database read error");
+                appState.accounts = accounts.map(acc => ({
+                    ...acc,
+                    expenses: expenses.filter(exp => exp.account_id === acc.id)
+                }));
 
-            appState.accounts = accounts.map(acc => ({
-                ...acc,
-                expenses: expenses.filter(exp => exp.account_id === acc.id)
-            }));
-
-            if (appState.accounts.length > 0 && !appState.activeAccountId) {
-                appState.activeAccountId = appState.accounts[0].id;
-            }
-            render();
+                if (appState.accounts.length > 0 && !appState.activeAccountId) {
+                    appState.activeAccountId = appState.accounts[0].id;
+                }
+                render();
+            } catch (err) { alert("Sync Error: " + err.message); }
         }
 
-        function render() {
-            renderAccountsList();
-            renderActiveAccountDashboard();
-        }
+        function render() { renderAccountsList(); renderActiveAccountDashboard(); }
 
         function renderAccountsList() {
             const listContainer = document.getElementById('accounts-list');
@@ -262,14 +324,13 @@
             appState.accounts.forEach(acc => {
                 const isActive = acc.id === appState.activeAccountId;
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-                const availableFunds = acc.funds - totalExpenses;
                 const card = document.createElement('div');
                 card.className = `snap-center shrink-0 min-w-[190px] lg:min-w-0 p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${isActive ? 'bg-blue-50/90 border-blue-200 ring-1 ring-blue-300' : 'bg-white border-slate-100'}`;
                 card.onclick = () => { appState.activeAccountId = acc.id; render(); };
                 card.innerHTML = `
                     <div class="truncate mr-2">
                         <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
-                        <p class="text-xs text-slate-500 mt-0.5">${formatCurrency(availableFunds)}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${formatCurrency(acc.funds - totalExpenses)}</p>
                     </div>
                     <button onclick="event.stopPropagation(); deleteAccount('${acc.id}')" class="p-2 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash text-xs"></i></button>`;
                 listContainer.appendChild(card);
@@ -321,7 +382,6 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
         function openAccountModal() { document.getElementById('account-form').reset(); document.getElementById('account-id').value = ''; openModal('account-modal'); }
         
         async function saveAccount(e) {
@@ -329,14 +389,12 @@
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
             const id = 'acc_' + Date.now().toString(36);
-
             await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id }]);
-            closeModal('account-modal');
-            pullDatabaseData();
+            closeModal('account-modal'); pullDatabaseData();
         }
 
         async function deleteAccount(id) {
-            if (confirm("Delete this account and all connected history on the cloud?")) {
+            if (confirm("Delete account from cloud?")) {
                 await _supabase.from('accounts').delete().eq('id', id);
                 if (appState.activeAccountId === id) appState.activeAccountId = null;
                 pullDatabaseData();
@@ -350,8 +408,7 @@
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             if (activeAcc && amount > 0) {
                 await _supabase.from('accounts').update({ funds: activeAcc.funds + amount }).eq('id', activeAcc.id);
-                closeModal('funds-modal');
-                pullDatabaseData();
+                closeModal('funds-modal'); pullDatabaseData();
             }
         }
 
@@ -362,16 +419,13 @@
             const date = document.getElementById('expense-date').value;
             const category = document.getElementById('expense-category').value;
             const id = 'exp_' + Date.now().toString(36);
-
             await _supabase.from('expenses').insert([{ id, account_id: appState.activeAccountId, amount, date, category, user_id: currentUser.id }]);
-            closeModal('expense-modal');
-            pullDatabaseData();
+            closeModal('expense-modal'); pullDatabaseData();
         }
 
         async function deleteExpense(id) {
             if (confirm("Erase entry row from database?")) {
-                await _supabase.from('expenses').delete().eq('id', id);
-                pullDatabaseData();
+                await _supabase.from('expenses').delete().eq('id', id); pullDatabaseData();
             }
         }
     </script>
