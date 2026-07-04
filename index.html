@@ -43,7 +43,7 @@
                 <p id="user-display" class="text-xs font-semibold text-emerald-600 mt-0.5"><i class="fa-solid fa-cloud"></i> Connected Live</p>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                <!-- NEW IMPORT BUTTON -->
+                <!-- JSON IMPORT BUTTON -->
                 <label class="cursor-pointer bg-amber-500 active:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-file-import"></i> Import JSON
                     <input type="file" id="json-import-file" accept=".json" class="hidden" onchange="importOldJSON(event)">
@@ -57,7 +57,7 @@
             </div>
         </header>
 
-        <!-- Main Layout Grid -->
+        <!-- Main Grid Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <aside class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -109,12 +109,12 @@
         </div>
     </div>
 
-    <!-- Floating Trigger -->
+    <!-- Floating Mobile Add Trigger -->
     <div class="sm:hidden fixed bottom-5 right-5 z-40">
         <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
     </div>
 
-    <!-- MODALS -->
+    <!-- CREATE ACCOUNT MODAL -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
@@ -138,6 +138,7 @@
         </div>
     </div>
 
+    <!-- TOP UP CASH MODAL -->
     <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Top Up Funds</h3>
@@ -154,6 +155,7 @@
         </div>
     </div>
 
+    <!-- LOG EXPENSE MODAL (WITH FIXED CUSTOM OPTION) -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
@@ -172,14 +174,20 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Category</label>
-                        <select id="expense-category" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
+                        <select id="expense-category" onchange="toggleCustomCategoryInput()" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
                             <option value="Food & Dining">Food & Dining</option>
                             <option value="Rent & Utilities">Rent & Utilities</option>
                             <option value="Transportation">Transportation</option>
                             <option value="Entertainment">Entertainment</option>
                             <option value="Shopping">Shopping</option>
                             <option value="Medical/Health">Medical/Health</option>
+                            <option value="Other">Other...</option>
                         </select>
+                    </div>
+                    <!-- Hidden input field triggered by picking "Other..." -->
+                    <div id="custom-category-group" class="hidden">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Custom Category Name</label>
+                        <input type="text" id="expense-custom-category" placeholder="e.g., Business License, Fuel" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                 </div>
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
@@ -190,11 +198,11 @@
         </div>
     </div>
 
-    <!-- ENGINE CODE CONNECTION -->
+    <!-- ENGINE CORE ENGINE SYNC SCRIPT -->
     <script>
         // ================= CONFIGURE KEYS HERE =================
         const SUPABASE_URL = 'https://tddhakuikdnmbouxxxww.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZGhha3Vpa2RubWJvdXh4eHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMzkzNzIsImV4cCI6MjA5ODcxNTM3Mn0.Z4ERReRtCUYqi85JDrAdm1NDaYjxWdmAIGA32EW5HYc';
+        const SUPABASE_ANON_KEY = 'eyJhYmdjOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZGhha3Vpa2RubWJvdXh4eHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMzkzNzIsImV4cCI6MjA5ODcxNTM3Mn0.Z4ERReRtCUYqi85JDrAdm1NDaYjxWdmAIGA32EW5HYc';
         // =======================================================
 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -203,6 +211,7 @@
 
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
+        // Track user authorization states live
         _supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 currentUser = session.user;
@@ -235,7 +244,18 @@
 
         async function handleSignOut() { await _supabase.auth.signOut(); }
 
-        // EXPLICIT JSON CLOUD MIGRATION CORE
+        // Handles conditional displaying of manual category box
+        function toggleCustomCategoryInput() {
+            const categorySelect = document.getElementById('expense-category');
+            const customGroup = document.getElementById('custom-category-group');
+            if (categorySelect.value === 'Other') {
+                customGroup.classList.remove('hidden');
+            } else {
+                customGroup.classList.add('hidden');
+            }
+        }
+
+        // Run data parser loops over incoming historical JSON templates
         async function importOldJSON(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
@@ -256,7 +276,6 @@
                     for (const oldAcc of incomingAccounts) {
                         const newAccId = 'acc_' + Math.random().toString(36).substring(2, 9);
                         
-                        // Push Account to Supabase
                         const { error: accErr } = await _supabase.from('accounts').insert([{
                             id: newAccId,
                             name: oldAcc.name || "Imported Account",
@@ -266,7 +285,6 @@
 
                         if (accErr) throw accErr;
 
-                        // Push Matching Expenses to Supabase
                         if (oldAcc.expenses && oldAcc.expenses.length > 0) {
                             const expenseBatch = oldAcc.expenses.map(exp => ({
                                 id: 'exp_' + Math.random().toString(36).substring(2, 9),
@@ -412,12 +430,24 @@
             }
         }
 
-        function openExpenseModal() { document.getElementById('expense-form').reset(); document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; openModal('expense-modal'); }
+        function openExpenseModal() { 
+            document.getElementById('expense-form').reset(); 
+            document.getElementById('custom-category-group').classList.add('hidden');
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; 
+            openModal('expense-modal'); 
+        }
+
         async function saveExpense(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('expense-amount').value);
             const date = document.getElementById('expense-date').value;
-            const category = document.getElementById('expense-category').value;
+            
+            let category = document.getElementById('expense-category').value;
+            if (category === 'Other') {
+                const customVal = document.getElementById('expense-custom-category').value.trim();
+                category = customVal !== "" ? customVal : "Other";
+            }
+
             const id = 'exp_' + Date.now().toString(36);
             await _supabase.from('expenses').insert([{ id, account_id: appState.activeAccountId, amount, date, category, user_id: currentUser.id }]);
             closeModal('expense-modal'); pullDatabaseData();
