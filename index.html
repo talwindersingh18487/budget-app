@@ -3,236 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Multi-Account Expense Tracker</title>
+    <title>WealthFlow Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .ios-scroll {
-            -webkit-overflow-scrolling: touch;
-        }
-        input, select {
-            font-size: 16px !important;
-        }
+        .ios-scroll { -webkit-overflow-scrolling: touch; }
+        input, select { font-size: 16px !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen antialiased">
 
-    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md">
+            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight text-center">WealthFlow Cloud</h2>
+            <p class="text-center text-sm text-slate-500 mt-1 mb-6">Cross-Device Live Database Sync Engine</p>
+            
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Email</label>
+                    <input type="email" id="auth-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                    <input type="password" id="auth-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" id="auth-btn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl shadow-md active:bg-blue-800 transition">Sign In / Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-5 border-b border-slate-200">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">WealthFlow</h1>
-                <p class="text-sm text-slate-500 mt-0.5">Manage multiple accounts, budgets, and expenses seamlessly.</p>
+                <p id="user-display" class="text-xs font-semibold text-emerald-600 mt-0.5"><i class="fa-solid fa-cloud"></i> Connected Live</p>
             </div>
-            <button onclick="openAccountModal()" class="w-full md:w-auto bg-blue-600 active:bg-blue-800 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-2 touch-manipulation">
-                <i class="fa-solid fa-plus"></i> New Account
-            </button>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="openAccountModal()" class="flex-1 md:flex-none bg-blue-600 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Account
+                </button>
+                <button onclick="handleSignOut()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
             <aside class="lg:col-span-4 space-y-6">
-                <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                     <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-wallet text-blue-600"></i> My Accounts
                     </h2>
-                    <div id="accounts-list" class="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 ios-scroll snap-x">
-                        </div>
-                </div>
-
-                <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                        <i class="fa-brands fa-google-drive text-emerald-600"></i> Drive Cloud Sync
-                    </h2>
-                    <p class="text-xs text-slate-500 mb-4">Move or back up files into your mobile Google Drive application.</p>
-                    
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="exportBackupData()" class="bg-slate-100 active:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-200 touch-manipulation">
-                            <i class="fa-solid fa-download"></i> Export
-                        </button>
-                        <label class="bg-emerald-50 active:bg-emerald-100 text-emerald-700 font-semibold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-emerald-200 cursor-pointer text-center touch-manipulation">
-                            <i class="fa-solid fa-upload"></i> Import
-                            <input type="file" id="import-file-input" onchange="importBackupData(event)" class="hidden" accept=".json">
-                        </label>
-                    </div>
+                    <div id="accounts-list" class="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 ios-scroll snap-x"></div>
                 </div>
             </aside>
 
             <main class="lg:col-span-8 space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 sm:p-6 rounded-2xl text-white shadow-md relative overflow-hidden">
+                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-2xl text-white shadow-md relative overflow-hidden">
                         <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
-                        <h3 id="dashboard-funds" class="text-3xl sm:text-4xl font-black mt-1 tracking-tight">$0.00</h3>
-                        <button onclick="openFundsModal()" class="mt-4 bg-white/20 active:bg-white/30 text-white text-xs font-bold py-2 px-3 rounded-lg transition backdrop-blur-sm touch-manipulation">
-                            <i class="fa-solid fa-money-bill-trend-up mr-1"></i> Add Funds
-                        </button>
+                        <h3 id="dashboard-funds" class="text-3xl font-black mt-1">$0.00</h3>
+                        <button onclick="openFundsModal()" class="mt-4 bg-white/20 text-white text-xs font-bold py-2 px-3 rounded-lg backdrop-blur-sm">Top Up Balance</button>
                     </div>
-
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses</p>
-                            <h3 id="dashboard-expenses" class="text-3xl sm:text-4xl font-black mt-1 text-slate-900 tracking-tight">$0.00</h3>
+                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">$0.00</h3>
                         </div>
-                        <p id="active-account-name" class="text-xs text-slate-500 mt-3 italic font-medium truncate">No account selected</p>
+                        <p id="active-account-name" class="text-xs text-slate-500 mt-3 italic truncate">No account selected</p>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center gap-4">
-                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-indigo-600"></i> Ledger
-                        </h3>
-                        <button onclick="openExpenseModal()" id="add-expense-btn" disabled class="hidden sm:flex bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-xl shadow-sm transition items-center gap-2 text-sm">
-                            <i class="fa-solid fa-plus"></i> Add Expense
-                        </button>
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-slate-900">Ledger</h3>
+                        <button onclick="openExpenseModal()" id="add-expense-btn" disabled class="hidden sm:flex bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-sm">Add Expense</button>
                     </div>
-
                     <div class="hidden sm:block overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-400 uppercase text-xs tracking-wider border-b border-slate-100">
-                                    <th class="py-4 px-6 font-semibold">Category</th>
-                                    <th class="py-4 px-6 font-semibold">Date</th>
-                                    <th class="py-4 px-6 font-semibold">Amount</th>
-                                    <th class="py-4 px-6 font-semibold text-right">Actions</th>
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-xs">
+                                <tr>
+                                    <th class="py-4 px-6">Category</th>
+                                    <th class="py-4 px-6">Date</th>
+                                    <th class="py-4 px-6">Amount</th>
+                                    <th class="py-4 px-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
                         </table>
                     </div>
-
                     <div id="expenses-mobile-list" class="block sm:hidden divide-y divide-slate-100"></div>
-
-                    <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">
-                        <i class="fa-solid fa-receipt text-3xl mb-2 text-slate-300"></i>
-                        <p class="text-sm">No expenses logged for this account yet.</p>
-                    </div>
+                    <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">No expenses logged yet.</div>
                 </div>
             </main>
         </div>
     </div>
 
     <div class="sm:hidden fixed bottom-5 right-5 z-40">
-        <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 active:bg-slate-800 disabled:bg-slate-300 disabled:shadow-none text-white rounded-full shadow-lg flex items-center justify-center transition text-xl border border-white/20 touch-manipulation">
-            <i class="fa-solid fa-plus"></i>
-        </button>
+        <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
     </div>
 
-    <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-xs items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-100">
+    <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 id="account-modal-title" class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
             <form id="account-form" onsubmit="saveAccount(event)">
                 <input type="hidden" id="account-id">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Account Name</label>
-                        <input type="text" id="account-name" required placeholder="e.g., Personal Wallet" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Name</label>
+                        <input type="text" id="account-name" required placeholder="e.g., Personal Wallet" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                     <div id="initial-funds-group">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Starting Balance ($)</label>
-                        <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Starting Balance ($)</label>
+                        <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                 </div>
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('account-modal')" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-white bg-blue-600 rounded-xl shadow-sm">Save Account</button>
+                    <button type="button" onclick="closeModal('account-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-blue-600 rounded-xl">Save Account</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-xs items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl border border-slate-100">
+    <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Top Up Funds</h3>
             <form id="funds-form" onsubmit="addFundsSubmit(event)">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Amount to Add ($)</label>
-                    <input type="number" id="fund-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount to Add ($)</label>
+                    <input type="number" id="fund-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                 </div>
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('funds-modal')" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl shadow-sm">Add Cash</button>
+                    <button type="button" onclick="closeModal('funds-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-emerald-600 rounded-xl">Add Cash</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-xs items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-100">
+    <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 id="expense-modal-title" class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
             <form id="expense-form" onsubmit="saveExpense(event)">
                 <input type="hidden" id="expense-id">
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Amount ($)</label>
-                            <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount ($)</label>
+                            <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Date</label>
-                            <input type="date" id="expense-date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Date</label>
+                            <input type="date" id="expense-date" required class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Category</label>
-                        <select id="expense-category" onchange="toggleCustomCategoryField()" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 h-12">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Category</label>
+                        <select id="expense-category" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
                             <option value="Food & Dining">Food & Dining</option>
                             <option value="Rent & Utilities">Rent & Utilities</option>
                             <option value="Transportation">Transportation</option>
                             <option value="Entertainment">Entertainment</option>
                             <option value="Shopping">Shopping</option>
                             <option value="Medical/Health">Medical/Health</option>
-                            <option value="Other">Other</option>
                         </select>
-                    </div>
-                    <div id="custom-category-group" class="hidden">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Custom Category Name</label>
-                        <input type="text" id="expense-custom-category" placeholder="e.g., Subscriptions" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
                     </div>
                 </div>
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('expense-modal')" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-sm font-semibold text-white bg-slate-900 rounded-xl shadow-sm">Confirm</button>
+                    <button type="button" onclick="closeModal('expense-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-slate-900 rounded-xl">Confirm</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        let data = JSON.parse(localStorage.getItem('wealthflow_data')) || { accounts: [], activeAccountId: null };
-        function syncStorage() { localStorage.setItem('wealthflow_data', JSON.stringify(data)); render(); }
+        // ================= CONFIGURE KEYS HERE =================
+        const SUPABASE_URL = 'sb_publishable_chkutQpF2Qr2f2U38b9CrA_kSPxEhF4'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZGhha3Vpa2RubWJvdXh4eHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMzkzNzIsImV4cCI6MjA5ODcxNTM3Mn0.Z4ERReRtCUYqi85JDrAdm1NDaYjxWdmAIGA32EW5HYc';
+        // =======================================================
+
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUser = null;
+        let appState = { accounts: [], activeAccountId: null };
+
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-        function render() { renderAccountsList(); renderActiveAccountDashboard(); }
+        // AUTH OPERATION INITIALIZER
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                pullDatabaseData();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+        });
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const btn = document.getElementById('auth-btn');
+            btn.disabled = true; btn.innerText = "Connecting Framework...";
+
+            // Attempt Sign In
+            let { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            
+            // If account doesn't exist, automatically Sign Them Up!
+            if (error && error.message.includes("Invalid login credentials")) {
+                let signUp = await _supabase.auth.signUp({ email, password });
+                if (signUp.error) { alert(signUp.error.message); btn.disabled = false; btn.innerText = "Sign In / Sign Up"; } 
+                else { alert("Account created! Logging you in seamlessly."); }
+            } else if (error) {
+                alert(error.message); btn.disabled = false; btn.innerText = "Sign In / Sign Up";
+            }
+        }
+
+        async function handleSignOut() { await _supabase.auth.signOut(); }
+
+        // DATA RETRIEVAL CORE ENGINE
+        async function pullDatabaseData() {
+            if (!currentUser) return;
+
+            const { data: accounts, error: accErr } = await _supabase.from('accounts').select('*');
+            const { data: expenses, error: expErr } = await _supabase.from('expenses').select('*');
+
+            if (accErr || expErr) return console.error("Database read error");
+
+            appState.accounts = accounts.map(acc => ({
+                ...acc,
+                expenses: expenses.filter(exp => exp.account_id === acc.id)
+            }));
+
+            if (appState.accounts.length > 0 && !appState.activeAccountId) {
+                appState.activeAccountId = appState.accounts[0].id;
+            }
+            render();
+        }
+
+        function render() {
+            renderAccountsList();
+            renderActiveAccountDashboard();
+        }
 
         function renderAccountsList() {
             const listContainer = document.getElementById('accounts-list');
             listContainer.innerHTML = '';
-            if (data.accounts.length === 0) {
-                listContainer.innerHTML = `<p class="text-sm text-slate-400 text-center py-4 w-full">No accounts yet.</p>`;
+            if (appState.accounts.length === 0) {
+                listContainer.innerHTML = `<p class="text-sm text-slate-400 text-center py-4 w-full">No cloud accounts yet.</p>`;
                 return;
             }
-            data.accounts.forEach(acc => {
-                const isActive = acc.id === data.activeAccountId;
-                const totalExpenses = acc.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            appState.accounts.forEach(acc => {
+                const isActive = acc.id === appState.activeAccountId;
+                const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const availableFunds = acc.funds - totalExpenses;
                 const card = document.createElement('div');
-                card.className = `snap-center shrink-0 min-w-[190px] lg:min-w-0 p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${isActive ? 'bg-blue-50/90 border-blue-200 shadow-sm ring-1 ring-blue-300' : 'bg-white border-slate-100'}`;
-                card.onclick = () => selectAccount(acc.id);
+                card.className = `snap-center shrink-0 min-w-[190px] lg:min-w-0 p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${isActive ? 'bg-blue-50/90 border-blue-200 ring-1 ring-blue-300' : 'bg-white border-slate-100'}`;
+                card.onclick = () => { appState.activeAccountId = acc.id; render(); };
                 card.innerHTML = `
                     <div class="truncate mr-2">
-                        <h4 class="font-bold text-slate-900 text-sm sm:text-base truncate">${acc.name}</h4>
-                        <p class="text-xs text-slate-500 mt-0.5">Funds: <span class="font-semibold text-slate-700">${formatCurrency(availableFunds)}</span></p>
+                        <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">${formatCurrency(availableFunds)}</p>
                     </div>
-                    <div class="flex items-center gap-0.5">
-                        <button onclick="event.stopPropagation(); openAccountModal('${acc.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button onclick="event.stopPropagation(); deleteAccount('${acc.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash text-xs"></i></button>
-                    </div>`;
+                    <button onclick="event.stopPropagation(); deleteAccount('${acc.id}')" class="p-2 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash text-xs"></i></button>`;
                 listContainer.appendChild(card);
             });
         }
 
         function renderActiveAccountDashboard() {
-            const activeAcc = data.accounts.find(a => a.id === data.activeAccountId);
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             const fundsDisplay = document.getElementById('dashboard-funds');
             const expensesDisplay = document.getElementById('dashboard-expenses');
             const accountNameDisplay = document.getElementById('active-account-name');
@@ -242,25 +287,20 @@
             const mobileList = document.getElementById('expenses-mobile-list');
             const noExpensesMsg = document.getElementById('no-expenses-msg');
 
-            tableBody.innerHTML = '';
-            mobileList.innerHTML = '';
+            tableBody.innerHTML = ''; mobileList.innerHTML = '';
 
             if (!activeAcc) {
-                fundsDisplay.innerText = formatCurrency(0);
-                expensesDisplay.innerText = formatCurrency(0);
+                fundsDisplay.innerText = formatCurrency(0); expensesDisplay.innerText = formatCurrency(0);
                 accountNameDisplay.innerText = 'No account selected';
-                addExpenseBtn.disabled = true;
-                mobileFloatingBtn.disabled = true;
-                noExpensesMsg.classList.remove('hidden');
-                return;
+                addExpenseBtn.disabled = true; mobileFloatingBtn.disabled = true;
+                noExpensesMsg.classList.remove('hidden'); return;
             }
 
-            const totalExpenses = activeAcc.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalExpenses = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
             fundsDisplay.innerText = formatCurrency(activeAcc.funds - totalExpenses);
             expensesDisplay.innerText = formatCurrency(totalExpenses);
             accountNameDisplay.innerText = `Active: ${activeAcc.name}`;
-            addExpenseBtn.disabled = false;
-            mobileFloatingBtn.disabled = false;
+            addExpenseBtn.disabled = false; mobileFloatingBtn.disabled = false;
 
             if (activeAcc.expenses.length === 0) {
                 noExpensesMsg.classList.remove('hidden');
@@ -268,148 +308,72 @@
                 noExpensesMsg.classList.add('hidden');
                 [...activeAcc.expenses].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(exp => {
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50/80";
-                    tr.innerHTML = `<td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td><td class="py-3.5 px-6 text-slate-500">${exp.date}</td><td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td><td class="py-3.5 px-6 text-right"><button onclick="openExpenseModal('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-pencil text-xs"></i></button><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
+                    tr.innerHTML = `<td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td><td class="py-3.5 px-6 text-slate-500">${exp.date}</td><td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td><td class="py-3.5 px-6 text-right"><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
                     tableBody.appendChild(tr);
 
                     const mDiv = document.createElement('div');
                     mDiv.className = "p-4 flex justify-between items-center bg-white";
-                    mDiv.innerHTML = `<div><p class="font-bold text-slate-900">${exp.category}</p><p class="text-xs text-slate-400 mt-0.5">${exp.date}</p></div><div class="flex items-center gap-3"><span class="font-bold text-rose-600">-${formatCurrency(exp.amount)}</span><div class="flex border-l pl-2"><button onclick="openExpenseModal('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-pencil text-sm"></i></button><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
+                    mDiv.innerHTML = `<div><p class="font-bold text-slate-900">${exp.category}</p><p class="text-xs text-slate-400">${exp.date}</p></div><div class="flex items-center gap-3"><span class="font-bold text-rose-600">-${formatCurrency(exp.amount)}</span><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-sm"></i></button></div>`;
                     mobileList.appendChild(mDiv);
                 });
             }
         }
 
-        function selectAccount(id) { data.activeAccountId = id; syncStorage(); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function openAccountModal(id = null) {
-            const modalTitle = document.getElementById('account-modal-title');
-            const initialFundsGroup = document.getElementById('initial-funds-group');
-            document.getElementById('account-form').reset();
-            document.getElementById('account-id').value = id || '';
-            if (id) {
-                const acc = data.accounts.find(a => a.id === id);
-                modalTitle.innerText = "Edit Account Details";
-                document.getElementById('account-name').value = acc.name;
-                initialFundsGroup.classList.add('hidden');
-            } else {
-                modalTitle.innerText = "Create New Account";
-                initialFundsGroup.classList.remove('hidden');
-            }
-            openModal('account-modal');
-        }
-
-        function saveAccount(e) {
+        function openAccountModal() { document.getElementById('account-form').reset(); document.getElementById('account-id').value = ''; openModal('account-modal'); }
+        
+        async function saveAccount(e) {
             e.preventDefault();
-            const id = document.getElementById('account-id').value;
             const name = document.getElementById('account-name').value.trim();
-            if (id) {
-                const acc = data.accounts.find(a => a.id === id);
-                if (acc) acc.name = name;
-            } else {
-                const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
-                const newAcc = { id: 'acc_' + Date.now().toString(36), name, funds: initialFunds, expenses: [] };
-                data.accounts.push(newAcc);
-                if (!data.activeAccountId) data.activeAccountId = newAcc.id;
-            }
+            const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
+            const id = 'acc_' + Date.now().toString(36);
+
+            await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id }]);
             closeModal('account-modal');
-            syncStorage();
+            pullDatabaseData();
         }
 
-        function deleteAccount(id) {
-            if (confirm("Permanently drop this account?")) {
-                data.accounts = data.accounts.filter(a => a.id !== id);
-                if (data.activeAccountId === id) data.activeAccountId = data.accounts.length > 0 ? data.accounts[0].id : null;
-                syncStorage();
+        async function deleteAccount(id) {
+            if (confirm("Delete this account and all connected history on the cloud?")) {
+                await _supabase.from('accounts').delete().eq('id', id);
+                if (appState.activeAccountId === id) appState.activeAccountId = null;
+                pullDatabaseData();
             }
         }
 
-        function openFundsModal() { if(!data.activeAccountId) return alert("Select an account."); document.getElementById('funds-form').reset(); openModal('funds-modal'); }
-        function addFundsSubmit(e) { e.preventDefault(); const amount = parseFloat(document.getElementById('fund-amount').value); const acc = data.accounts.find(a => a.id === data.activeAccountId); if (acc && amount > 0) { acc.funds += amount; closeModal('funds-modal'); syncStorage(); } }
-
-        function toggleCustomCategoryField() {
-            const selectEl = document.getElementById('expense-category');
-            const customGroup = document.getElementById('custom-category-group');
-            const customInput = document.getElementById('expense-custom-category');
-            if (selectEl.value === 'Other') { customGroup.classList.remove('hidden'); customInput.required = true; } 
-            else { customGroup.classList.add('hidden'); customInput.required = false; customInput.value = ''; }
-        }
-
-        function openExpenseModal(expenseId = null) {
-            const activeAcc = data.accounts.find(a => a.id === data.activeAccountId); if (!activeAcc) return;
-            document.getElementById('expense-form').reset();
-            document.getElementById('expense-id').value = expenseId || '';
-            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
-            const modalTitle = document.getElementById('expense-modal-title');
-            const selectEl = document.getElementById('expense-category');
-            const customInput = document.getElementById('expense-custom-category');
-
-            if (expenseId) {
-                modalTitle.innerText = "Edit Logged Expense";
-                const exp = activeAcc.expenses.find(e => e.id === expenseId);
-                if (exp) {
-                    document.getElementById('expense-amount').value = exp.amount;
-                    document.getElementById('expense-date').value = exp.date;
-                    if (["Food & Dining", "Rent & Utilities", "Transportation", "Entertainment", "Shopping", "Medical/Health"].includes(exp.category)) { selectEl.value = exp.category; } 
-                    else { selectEl.value = 'Other'; customInput.value = exp.category; }
-                }
-            } else { modalTitle.innerText = "Log Expense Row"; selectEl.value = "Food & Dining"; }
-            toggleCustomCategoryField();
-            openModal('expense-modal');
-        }
-
-        function saveExpense(e) {
+        function openFundsModal() { document.getElementById('funds-form').reset(); openModal('funds-modal'); }
+        async function addFundsSubmit(e) {
             e.preventDefault();
-            const activeAcc = data.accounts.find(a => a.id === data.activeAccountId); if (!activeAcc) return;
-            const id = document.getElementById('expense-id').value;
+            const amount = parseFloat(document.getElementById('fund-amount').value);
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (activeAcc && amount > 0) {
+                await _supabase.from('accounts').update({ funds: activeAcc.funds + amount }).eq('id', activeAcc.id);
+                closeModal('funds-modal');
+                pullDatabaseData();
+            }
+        }
+
+        function openExpenseModal() { document.getElementById('expense-form').reset(); document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; openModal('expense-modal'); }
+        async function saveExpense(e) {
+            e.preventDefault();
             const amount = parseFloat(document.getElementById('expense-amount').value);
             const date = document.getElementById('expense-date').value;
-            const selectValue = document.getElementById('expense-category').value;
-            const customValue = document.getElementById('expense-custom-category').value.trim();
-            const finalCategory = (selectValue === 'Other' && customValue !== '') ? customValue : selectValue;
+            const category = document.getElementById('expense-category').value;
+            const id = 'exp_' + Date.now().toString(36);
 
-            if (id) {
-                const exp = activeAcc.expenses.find(e => e.id === id); if (exp) { exp.amount = amount; exp.date = date; exp.category = finalCategory; }
-            } else {
-                activeAcc.expenses.push({ id: 'exp_' + Date.now().toString(36), amount, date, category: finalCategory });
-            }
+            await _supabase.from('expenses').insert([{ id, account_id: appState.activeAccountId, amount, date, category, user_id: currentUser.id }]);
             closeModal('expense-modal');
-            syncStorage();
+            pullDatabaseData();
         }
 
-        function deleteExpense(expenseId) {
-            if (confirm("Permanently erase entry?")) {
-                const activeAcc = data.accounts.find(a => a.id === data.activeAccountId);
-                if (activeAcc) { activeAcc.expenses = activeAcc.expenses.filter(e => e.id !== expenseId); syncStorage(); }
+        async function deleteExpense(id) {
+            if (confirm("Erase entry row from database?")) {
+                await _supabase.from('expenses').delete().eq('id', id);
+                pullDatabaseData();
             }
         }
-
-        function exportBackupData() {
-            if (data.accounts.length === 0) { alert("No data to back up!"); return; }
-            const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data))}`;
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", jsonString);
-            downloadAnchor.setAttribute("download", `wealthflow_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor); downloadAnchor.click(); downloadAnchor.remove();
-        }
-
-        function importBackupData(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parsedData = JSON.parse(e.target.result);
-                    if (parsedData && Array.isArray(parsedData.accounts)) {
-                        if (confirm("Overwrite active data?")) { data = parsedData; syncStorage(); alert("Data restored!"); }
-                    } else { alert("Invalid backup structure."); }
-                } catch (err) { alert("Error parsing file."); }
-                document.getElementById('import-file-input').value = '';
-            };
-            reader.readAsText(file);
-        }
-        render();
     </script>
 </body>
 </html>
