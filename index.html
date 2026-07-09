@@ -283,9 +283,18 @@
                 if (isRegistering) return; 
                 await fetchUserOrganization();
             } else {
-                currentUser = null; activeOrganization = null;
+                currentUser = null; 
+                activeOrganization = null;
+                
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('hidden');
+                
+                // Clear state triggers to unlock the submit buttons for subsequent auth loops
+                const authBtn = document.getElementById('auth-btn');
+                if (authBtn) {
+                    authBtn.disabled = false;
+                    authBtn.innerText = authMode === 'signup' ? "Register & Boot Workspace" : "Sign In";
+                }
             }
         });
 
