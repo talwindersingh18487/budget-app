@@ -235,6 +235,7 @@
         let activeOrganization = null; 
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
+        let isRegistering = false;
 
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
@@ -279,6 +280,7 @@
         _supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
+                if (isRegistering) return; 
                 await fetchUserOrganization();
             } else {
                 currentUser = null; activeOrganization = null;
@@ -343,16 +345,17 @@
                     targetOrgName = checkOrg[0].name;
                 }
 
-                // STEP 1: Insert the organization row FIRST if creating a new one
+                // STEP 1: Insert organization row
                 if (action === 'create') {
                     if (!targetOrgName) { alert("Please enter a business name."); btn.disabled = false; return; }
                     const { error: orgCreateErr } = await _supabase.from('organizations').insert([{ id: targetOrgId, name: targetOrgName }]);
                     if (orgCreateErr) { alert("Org Creation Error: " + orgCreateErr.message); btn.disabled = false; return; }
                 }
 
-                // STEP 2: Create the user auth account
+                // STEP 2: Create user auth account
+                isRegistering = true;
                 let { data: signUpData, error: signUpErr } = await _supabase.auth.signUp({ email, password });
-                if (signUpErr) { alert(signUpErr.message); btn.disabled = false; return; }
+                if (signUpErr) { alert(signUpErr.message); btn.disabled = false; isRegistering = false; return; }
 
                 if (signUpData && signUpData.user) {
                     const newUserId = signUpData.user.id;
@@ -362,14 +365,17 @@
                     if (memBindErr) { 
                         alert("Membership Binding Error: " + memBindErr.message); 
                         btn.disabled = false; 
+                        isRegistering = false;
                         return; 
                     }
                     
+                    isRegistering = false;
                     alert("Account and workspace configured successfully!");
                     location.reload();
                 } else {
                     alert("Signup successful! Please confirm your account if required by your settings.");
                     btn.disabled = false;
+                    isRegistering = false;
                     btn.innerText = "Register & Boot Workspace";
                 }
             }
