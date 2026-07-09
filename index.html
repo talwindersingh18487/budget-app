@@ -444,14 +444,17 @@
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
-                card.onclick = () => { appState.activeAccountId = acc.id; render(); };
+                card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
+                
                 card.innerHTML = `
-                    <div>
+                    <div onclick="appState.activeAccountId = '${acc.id}'; render();" class="flex-1">
                         <h4 class="font-bold text-slate-900 text-sm">${acc.name}</h4>
                         <p class="text-xs text-slate-500">Seed Base: ${formatCurrency(acc.funds)}</p>
+                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</span>
                     </div>
-                    <span class="text-xs font-bold text-slate-700">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</span>`;
+                    <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition pl-2">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>`;
                 listContainer.appendChild(card);
             });
 
@@ -471,6 +474,8 @@
 
             if (!activeAcc) {
                 activeAccName.innerText = "No account active";
+                fundsDisplay.innerText = formatCurrency(0);
+                expensesDisplay.innerText = formatCurrency(0);
                 return;
             }
 
@@ -544,6 +549,19 @@
             const id = 'acc_' + Date.now().toString(36);
             await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id, organization_id: activeOrganization.id }]);
             closeModal('account-modal'); pullDatabaseData();
+        }
+
+        async function deleteAccount(accountId, event) {
+            event.stopPropagation(); 
+            if (confirm("Permanently erase this ledger account? All corresponding history row logs will be wiped out automatically.")) {
+                try {
+                    await _supabase.from('accounts').delete().eq('id', accountId);
+                    if (appState.activeAccountId === accountId) {
+                        appState.activeAccountId = null;
+                    }
+                    pullDatabaseData();
+                } catch (err) { alert("Error deleting account: " + err.message); }
+            }
         }
 
         async function addFundsSubmit(e) {
