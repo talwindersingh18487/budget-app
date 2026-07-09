@@ -12,7 +12,7 @@
         input, select { font-size: 16px !important; }
         @media print {
             body { background: white; color: black; }
-            #auth-screen, #account-modal, #funds-modal, #expense-modal, #password-modal, header, aside, .floating-mobile-btn, #dropdown-menu-wrapper { display: none !important; }
+            #auth-screen, #account-modal, #funds-modal, #expense-modal, #password-modal, header, aside, .floating-mobile-btn, #dropdown-menu-wrapper, .date-filter-container { display: none !important; }
             main { width: 100% !important; margin: 0 !important; padding: 0 !important; }
         }
     </style>
@@ -135,10 +135,23 @@
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses</p>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses (Filtered)</p>
                             <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">$0.00</h3>
                         </div>
                         <p id="active-account-name" class="text-xs text-slate-500 mt-3 italic truncate">No account selected</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 date-filter-container">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days text-slate-400 text-sm"></i>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter Calendar Range:</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-1 min-w-[240px]">
+                        <input type="date" id="filter-start-date" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none">
+                        <span class="text-slate-400 text-xs">to</span>
+                        <input type="date" id="filter-end-date" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none">
+                        <button onclick="clearDateFilters()" class="text-xs text-blue-600 hover:underline font-medium ml-1">Clear</button>
                     </div>
                 </div>
 
@@ -153,6 +166,7 @@
                                 <tr>
                                     <th class="py-4 px-6">Category</th>
                                     <th class="py-4 px-6">Date</th>
+                                    <th class="py-4 px-6">Starting Funds</th>
                                     <th class="py-4 px-6">Amount</th>
                                     <th class="py-4 px-6 text-right print:hidden">Actions</th>
                                 </tr>
@@ -161,7 +175,7 @@
                         </table>
                     </div>
                     <div id="expenses-mobile-list" class="block sm:hidden divide-y divide-slate-100 print:hidden"></div>
-                    <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">No expenses logged yet.</div>
+                    <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">No expenses logged yet within this date range.</div>
                 </div>
             </main>
         </div>
@@ -327,13 +341,17 @@
             else customGroup.classList.add('hidden');
         }
 
-        // Dropdown UX visibility handler
         function toggleActionsDropdown() {
             const menu = document.getElementById('actions-dropdown-box');
             menu.classList.toggle('hidden');
         }
 
-        // Close dropdown when clicking anywhere outside of it
+        function clearDateFilters() {
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            renderActiveAccountDashboard();
+        }
+
         document.addEventListener('click', function(event) {
             const wrap = document.getElementById('dropdown-menu-wrapper');
             const menu = document.getElementById('actions-dropdown-box');
@@ -502,26 +520,47 @@
             } catch (err) { alert("Data Engine Loading Error: " + err.message); }
         }
 
-        // NEW DROPDOWN EXPORT FUNCTIONS
+        // GET FILTERED EXPENSES BASED ON CALENDAR INPUTS
+        function getFilteredExpenses(activeAcc) {
+            if (!activeAcc) return [];
+            const startDateStr = document.getElementById('filter-start-date').value;
+            const endDateStr = document.getElementById('filter-end-date').value;
+            
+            let result = [...activeAcc.expenses];
+            
+            if (startDateStr) {
+                const start = new Date(startDateStr);
+                result = result.filter(exp => new Date(exp.date) >= start);
+            }
+            if (endDateStr) {
+                const end = new Date(endDateStr);
+                result = result.filter(exp => new Date(exp.date) <= end);
+            }
+            return result.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+
         function exportToCSV() {
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
-            if (!activeAcc || activeAcc.expenses.length === 0) {
-                alert("No ledger entries found to export for this account.");
+            if (!activeAcc) return;
+            
+            const filtered = getFilteredExpenses(activeAcc);
+            if (filtered.length === 0) {
+                alert("No ledger entries found within the selected date range to export.");
                 return;
             }
 
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Account Name,Category,Date,Amount\n";
+            csvContent += "Account Name,Category,Date,Starting Funds,Expense Amount\n";
 
-            activeAcc.expenses.forEach(exp => {
-                const row = `"${activeAcc.name}","${exp.category}","${exp.date}",${exp.amount}`;
+            filtered.forEach(exp => {
+                const row = `"${activeAcc.name}","${exp.category}","${exp.date}",${activeAcc.funds},${exp.amount}`;
                 csvContent += row + "\n";
             });
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Ledger_Export_${activeAcc.name.replace(/\s+/g, '_')}.csv`);
+            link.setAttribute("download", `Ledger_Range_Export_${activeAcc.name.replace(/\s+/g, '_')}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -625,24 +664,42 @@
                 noExpensesMsg.classList.remove('hidden'); return;
             }
 
-            const totalExpenses = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-            fundsDisplay.innerText = formatCurrency(activeAcc.funds - totalExpenses);
-            expensesDisplay.innerText = formatCurrency(totalExpenses);
+            // Get filtered set matching criteria
+            const filteredExpenses = getFilteredExpenses(activeAcc);
+            const totalFilteredExpenses = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            
+            // Available funds defaults against overall ledger rules
+            const overallExpenses = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            fundsDisplay.innerText = formatCurrency(activeAcc.funds - overallExpenses);
+            expensesDisplay.innerText = formatCurrency(totalFilteredExpenses);
             accountNameDisplay.innerText = `Active: ${activeAcc.name}`;
             addExpenseBtn.disabled = false; mobileFloatingBtn.disabled = false;
 
-            if (activeAcc.expenses.length === 0) {
+            if (filteredExpenses.length === 0) {
                 noExpensesMsg.classList.remove('hidden');
             } else {
                 noExpensesMsg.classList.add('hidden');
-                [...activeAcc.expenses].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(exp => {
+                filteredExpenses.forEach(exp => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td><td class="py-3.5 px-6 text-slate-500">${exp.date}</td><td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td><td class="py-3.5 px-6 text-right print:hidden"><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
+                    tr.innerHTML = `
+                        <td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td>
+                        <td class="py-3.5 px-6 text-slate-500">${exp.date}</td>
+                        <td class="py-3.5 px-6 text-slate-600">${formatCurrency(activeAcc.funds)}</td>
+                        <td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td>
+                        <td class="py-3.5 px-6 text-right print:hidden"><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
                     tableBody.appendChild(tr);
 
                     const mDiv = document.createElement('div');
-                    mDiv.className = "p-4 flex justify-between items-center bg-white";
-                    mDiv.innerHTML = `<div><p class="font-bold text-slate-900">${exp.category}</p><p class="text-xs text-slate-400">${exp.date}</p></div><div class="flex items-center gap-3"><span class="font-bold text-rose-600">-${formatCurrency(exp.amount)}</span><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-sm"></i></button></div>`;
+                    mDiv.className = "p-4 flex flex-col gap-1 bg-white";
+                    mDiv.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <p class="font-bold text-slate-900">${exp.category}</p>
+                            <span class="font-bold text-rose-600">-${formatCurrency(exp.amount)}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-400">
+                            <span>Date: ${exp.date} | Start: ${formatCurrency(activeAcc.funds)}</span>
+                            <button onclick="deleteExpense('${exp.id}')" class="p-1 text-slate-400 print:hidden"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        </div>`;
                     mobileList.appendChild(mDiv);
                 });
             }
