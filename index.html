@@ -10,6 +10,11 @@
     <style>
         .ios-scroll { -webkit-overflow-scrolling: touch; }
         input, select { font-size: 16px !important; }
+        @media print {
+            body { background: white; color: black; }
+            #auth-screen, #account-modal, #funds-modal, #expense-modal, #password-modal, header, aside, .floating-mobile-btn, #dropdown-menu-wrapper { display: none !important; }
+            main { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen antialiased">
@@ -69,14 +74,31 @@
                     <p id="active-workspace-display" class="font-bold text-blue-600 uppercase tracking-wider"></p>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+            <div class="flex flex-wrap gap-2 w-full md:w-auto relative items-center">
+                
                 <button onclick="openPasswordModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3.5 rounded-xl text-sm transition flex items-center justify-center gap-2" title="Change Account Password">
                     <i class="fa-solid fa-lock text-slate-500"></i>
                 </button>
-                <label class="cursor-pointer bg-amber-500 active:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-file-import"></i> Import JSON
-                    <input type="file" id="json-import-file" accept=".json" class="hidden" onchange="importOldJSON(event)">
-                </label>
+
+                <div class="relative inline-block text-left" id="dropdown-menu-wrapper">
+                    <button onclick="toggleActionsDropdown()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bars-progress"></i> Tools <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <div id="actions-dropdown-box" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50">
+                        <label class="cursor-pointer flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
+                            <i class="fa-solid fa-cloud-arrow-up text-blue-500 w-4"></i> Upload Workspace Data
+                            <input type="file" id="json-import-file-dropdown" accept=".json" class="hidden" onchange="importOldJSON(event)">
+                        </label>
+                        <hr class="border-slate-100 my-1">
+                        <button onclick="exportToCSV()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
+                            <i class="fa-solid fa-file-csv text-emerald-500 w-4"></i> Download CSV
+                        </button>
+                        <button onclick="exportToPDF()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
+                            <i class="fa-solid fa-file-pdf text-rose-500 w-4"></i> Download PDF
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="openAccountModal()" class="flex-1 md:flex-none bg-blue-600 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> Account
                 </button>
@@ -104,7 +126,7 @@
                 </div>
             </aside>
 
-            <main class="lg:col-span-8 space-y-6">
+            <main class="lg:col-span-8 space-y-6" id="printable-dashboard-area">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-2xl text-white shadow-md relative overflow-hidden">
                         <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
@@ -125,27 +147,27 @@
                         <h3 class="text-lg font-bold text-slate-900">Ledger</h3>
                         <button onclick="openExpenseModal()" id="add-expense-btn" disabled class="hidden sm:flex bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-sm">Add Expense</button>
                     </div>
-                    <div class="hidden sm:block overflow-x-auto">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead class="bg-slate-50 text-slate-400 uppercase text-xs">
                                 <tr>
                                     <th class="py-4 px-6">Category</th>
                                     <th class="py-4 px-6">Date</th>
                                     <th class="py-4 px-6">Amount</th>
-                                    <th class="py-4 px-6 text-right">Actions</th>
+                                    <th class="py-4 px-6 text-right print:hidden">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
                         </table>
                     </div>
-                    <div id="expenses-mobile-list" class="block sm:hidden divide-y divide-slate-100"></div>
+                    <div id="expenses-mobile-list" class="block sm:hidden divide-y divide-slate-100 print:hidden"></div>
                     <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">No expenses logged yet.</div>
                 </div>
             </main>
         </div>
     </div>
 
-    <div class="sm:hidden fixed bottom-5 right-5 z-40">
+    <div class="sm:hidden fixed bottom-5 right-5 z-40 floating-mobile-btn">
         <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
     </div>
 
@@ -305,15 +327,27 @@
             else customGroup.classList.add('hidden');
         }
 
+        // Dropdown UX visibility handler
+        function toggleActionsDropdown() {
+            const menu = document.getElementById('actions-dropdown-box');
+            menu.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking anywhere outside of it
+        document.addEventListener('click', function(event) {
+            const wrap = document.getElementById('dropdown-menu-wrapper');
+            const menu = document.getElementById('actions-dropdown-box');
+            if (wrap && !wrap.contains(event.target) && menu) {
+                menu.classList.add('hidden');
+            }
+        });
+
         _supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
-                
-                // Inject user email address directly onto header element node
                 if(currentUser && currentUser.email) {
                     document.getElementById('header-user-email').innerText = currentUser.email;
                 }
-
                 if (isRegistering) return; 
                 await fetchUserOrganization();
             } else {
@@ -371,7 +405,6 @@
                 let { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) { alert("Access Denied: " + error.message); btn.disabled = false; btn.innerText = "Sign In"; }
             } else {
-                // SIGNUP MODE
                 const action = document.getElementById('business-action').value;
                 let targetOrgId = 'biz_' + Math.random().toString(36).substring(2, 9);
                 let targetOrgName = document.getElementById('business-name').value.trim();
@@ -387,14 +420,12 @@
                     targetOrgName = checkOrg[0].name;
                 }
 
-                // STEP 1: Insert organization row
                 if (action === 'create') {
                     if (!targetOrgName) { alert("Please enter a business name."); btn.disabled = false; return; }
                     const { error: orgCreateErr } = await _supabase.from('organizations').insert([{ id: targetOrgId, name: targetOrgName }]);
                     if (orgCreateErr) { alert("Org Creation Error: " + orgCreateErr.message); btn.disabled = false; return; }
                 }
 
-                // STEP 2: Create user auth account
                 isRegistering = true;
                 let { data: signUpData, error: signUpErr } = await _supabase.auth.signUp({ email, password });
                 if (signUpErr) { alert(signUpErr.message); btn.disabled = false; isRegistering = false; return; }
@@ -402,7 +433,6 @@
                 if (signUpData && signUpData.user) {
                     const newUserId = signUpData.user.id;
 
-                    // STEP 3: Link user to organization
                     const { error: memBindErr } = await _supabase.from('organization_members').insert([{ user_id: newUserId, organization_id: targetOrgId }]);
                     if (memBindErr) { 
                         alert("Membership Binding Error: " + memBindErr.message); 
@@ -438,9 +468,7 @@
             if(nPass.length < 6) { alert("Password must be at least 6 characters long!"); return; }
 
             pBtn.disabled = true; pBtn.innerText = "Updating Crypt Token...";
-
             const { error } = await _supabase.auth.updateUser({ password: nPass });
-            
             pBtn.disabled = false; pBtn.innerText = "Update Password";
 
             if(error) {
@@ -474,7 +502,39 @@
             } catch (err) { alert("Data Engine Loading Error: " + err.message); }
         }
 
+        // NEW DROPDOWN EXPORT FUNCTIONS
+        function exportToCSV() {
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (!activeAcc || activeAcc.expenses.length === 0) {
+                alert("No ledger entries found to export for this account.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Account Name,Category,Date,Amount\n";
+
+            activeAcc.expenses.forEach(exp => {
+                const row = `"${activeAcc.name}","${exp.category}","${exp.date}",${exp.amount}`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Ledger_Export_${activeAcc.name.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+        }
+
+        function exportToPDF() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            window.print();
+        }
+
         async function importOldJSON(event) {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
             const file = event.target.files[0];
             if (!file || !currentUser || !activeOrganization) return;
 
@@ -540,7 +600,7 @@
                         <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
                         <p class="text-xs text-slate-500 mt-0.5">${formatCurrency(acc.funds - totalExpenses)}</p>
                     </div>
-                    <button onclick="event.stopPropagation(); deleteAccount('${acc.id}')" class="p-2 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash text-xs"></i></button>`;
+                    <button onclick="event.stopPropagation(); deleteAccount('${acc.id}')" class="p-2 text-slate-400 hover:text-rose-600 print:hidden"><i class="fa-solid fa-trash text-xs"></i></button>`;
                 listContainer.appendChild(card);
             });
         }
@@ -577,7 +637,7 @@
                 noExpensesMsg.classList.add('hidden');
                 [...activeAcc.expenses].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(exp => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td><td class="py-3.5 px-6 text-slate-500">${exp.date}</td><td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td><td class="py-3.5 px-6 text-right"><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
+                    tr.innerHTML = `<td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td><td class="py-3.5 px-6 text-slate-500">${exp.date}</td><td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td><td class="py-3.5 px-6 text-right print:hidden"><button onclick="deleteExpense('${exp.id}')" class="p-2 text-slate-400"><i class="fa-solid fa-trash-can text-xs"></i></button></td>`;
                     tableBody.appendChild(tr);
 
                     const mDiv = document.createElement('div');
