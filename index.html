@@ -113,16 +113,7 @@
                     <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-wallet text-blue-600"></i> Workspace Accounts
                     </h2>
-                    <div id="accounts-list" class="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 ios-scroll snap-x"></div>
-                </div>
-                
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                        <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Cash Top-Up Logs
-                    </h2>
-                    <div id="funding-history-list" class="space-y-2 max-h-48 overflow-y-auto ios-scroll text-xs">
-                        <p class="text-slate-400 italic">Select an account to view deposit logs.</p>
-                    </div>
+                    <div id="accounts-list" class="space-y-3"></div>
                 </div>
 
                 <div class="bg-slate-900 text-slate-400 p-4 rounded-xl text-xs space-y-1">
@@ -136,29 +127,29 @@
             </aside>
 
             <main class="lg:col-span-8 space-y-6" id="printable-dashboard-area">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-slate-100 p-5 rounded-2xl border border-slate-200 text-slate-800 shadow-sm relative overflow-hidden">
-                        <p class="text-slate-500 font-medium text-xs uppercase tracking-wider">Initial Base Balance</p>
-                        <h3 id="dashboard-starting-funds" class="text-2xl font-bold mt-1">$0.00</h3>
-                    </div>
-                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-2xl text-white shadow-md relative overflow-hidden">
-                        <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
-                        <h3 id="dashboard-funds" class="text-2xl font-black mt-1">$0.00</h3>
-                        <button onclick="openFundsModal()" class="mt-3 bg-white/20 text-white text-[11px] font-bold py-1.5 px-2.5 rounded-lg backdrop-blur-sm">Top Up Balance</button>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl text-white shadow-md relative overflow-hidden flex flex-col justify-between">
                         <div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Expenses (Filtered)</p>
-                            <h3 id="dashboard-expenses" class="text-2xl font-black mt-1 text-slate-900">$0.00</h3>
+                            <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
+                            <h3 id="dashboard-funds" class="text-3xl font-black mt-1">$0.00</h3>
                         </div>
-                        <p id="active-account-name" class="text-xs text-slate-500 mt-2 italic truncate">No account selected</p>
+                        <div class="mt-4">
+                            <button onclick="openFundsModal()" class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2 px-4 rounded-xl backdrop-blur-sm transition">Top Up Balance</button>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses</p>
+                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">$0.00</h3>
+                        </div>
+                        <p id="active-account-name" class="text-xs text-slate-500 mt-4 italic truncate">No account selected</p>
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 date-filter-container">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-calendar-days text-slate-400 text-sm"></i>
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter Calendar Range:</span>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter Range:</span>
                     </div>
                     <div class="flex items-center gap-2 flex-1 min-w-[240px]">
                         <input type="date" id="filter-start-date" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none">
@@ -168,84 +159,98 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-slate-900">Ledger</h3>
-                        <button onclick="openExpenseModal()" id="add-expense-btn" disabled class="hidden sm:flex bg-slate-900 text-white font-semibold py-2 px-4 rounded-xl text-sm">Add Expense</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                                <i class="fa-solid fa-circle-plus text-emerald-600"></i> Cash Additions Log
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+                                    <tr>
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                        <th class="py-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funding-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                            </table>
+                            <div id="no-funding-msg" class="p-6 text-center text-slate-400 italic hidden">No funds added yet.</div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-slate-400 uppercase text-xs">
-                                <tr>
-                                    <th class="py-4 px-6">Category</th>
-                                    <th class="py-4 px-6">Date</th>
-                                    <th class="py-4 px-6">Amount</th>
-                                    <th class="py-4 px-6 text-right print:hidden">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
-                        </table>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center h-[53px]">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                                <i class="fa-solid fa-circle-minus text-rose-600"></i> Expense Ledger
+                            </h3>
+                            <button onclick="openExpenseModal()" id="add-expense-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 px-3 rounded-lg text-xs transition">Add Row</button>
+                        </div>
+                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+                                    <tr>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                        <th class="py-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                            </table>
+                            <div id="no-expenses-msg" class="p-6 text-center text-slate-400 italic hidden">No expenses logged.</div>
+                        </div>
                     </div>
-                    <div id="expenses-mobile-list" class="block sm:hidden divide-y divide-slate-100 print:hidden"></div>
-                    <div id="no-expenses-msg" class="p-8 text-center text-slate-400 hidden">No expenses logged yet within this date range.</div>
                 </div>
             </main>
         </div>
     </div>
 
-    <div class="sm:hidden fixed bottom-5 right-5 z-40 floating-mobile-btn">
-        <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
-    </div>
-
-    <div id="password-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-2">Update Security Token</h3>
-            <p class="text-xs text-slate-500 mb-4">Provide a new encryption pass phrase key.</p>
+    <div id="password-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Update Credentials</h3>
             <form id="password-form" onsubmit="handleUpdatePassword(event)">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">New Password</label>
                         <input type="password" id="new-password" required minlength="6" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Confirm New Password</label>
-                        <input type="password" id="confirm-new-password" required minlength="6" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
-                    </div>
                 </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('password-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" id="password-submit-btn" class="w-full sm:w-auto px-4 py-3 text-white bg-slate-900 rounded-xl">Update Password</button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('password-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-white bg-slate-900 rounded-xl text-sm font-medium">Update</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
+    <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
             <form id="account-form" onsubmit="saveAccount(event)">
-                <input type="hidden" id="account-id">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Name</label>
-                        <input type="text" id="account-name" required class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Description Name</label>
+                        <input type="text" id="account-name" required placeholder="e.g., Primary Cash Vault" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Starting Balance ($)</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Base Seed Funds ($)</label>
                         <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                 </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('account-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-blue-600 rounded-xl">Save Account</button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('account-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-white bg-blue-600 rounded-xl text-sm font-medium">Save Account</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Top Up Funds</h3>
+    <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Log Added Cash/Funds</h3>
             <form id="funds-form" onsubmit="addFundsSubmit(event)">
                 <div class="space-y-4">
                     <div>
@@ -253,25 +258,24 @@
                         <input type="number" id="fund-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Deposit Date</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Date Injected/Added</label>
                         <input type="date" id="fund-date" required class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                 </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('funds-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-emerald-600 rounded-xl">Add Cash</button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('funds-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-white bg-emerald-600 rounded-xl text-sm font-medium">Inject Funds</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
+    <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Log Line Expense</h3>
             <form id="expense-form" onsubmit="saveExpense(event)">
-                <input type="hidden" id="expense-id">
                 <div class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount ($)</label>
                             <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
@@ -282,25 +286,20 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Category</label>
-                        <select id="expense-category" onchange="toggleCustomCategoryInput()" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Category Focus</label>
+                        <select id="expense-category" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
                             <option value="Food & Dining">Food & Dining</option>
                             <option value="Rent & Utilities">Rent & Utilities</option>
                             <option value="Transportation">Transportation</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Medical/Health">Medical/Health</option>
-                            <option value="Other">Other...</option>
+                            <option value="Supplies & Inventory">Supplies & Inventory</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Other">Other Miscellaneous</option>
                         </select>
                     </div>
-                    <div id="custom-category-group" class="hidden">
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Custom Category Name</label>
-                        <input type="text" id="expense-custom-category" placeholder="e.g., Fuel, Inventory" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
-                    </div>
                 </div>
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
-                    <button type="button" onclick="closeModal('expense-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-3 text-white bg-slate-900 rounded-xl">Confirm</button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('expense-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2.5 text-white bg-slate-900 rounded-xl text-sm font-medium">Log Row</button>
                 </div>
             </form>
         </div>
@@ -315,7 +314,6 @@
         let activeOrganization = null; 
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
-        let isRegistering = false;
 
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
@@ -350,16 +348,8 @@
             }
         }
 
-        function toggleCustomCategoryInput() {
-            const categorySelect = document.getElementById('expense-category');
-            const customGroup = document.getElementById('custom-category-group');
-            if (categorySelect.value === 'Other') customGroup.classList.remove('hidden');
-            else customGroup.classList.add('hidden');
-        }
-
         function toggleActionsDropdown() {
-            const menu = document.getElementById('actions-dropdown-box');
-            menu.classList.toggle('hidden');
+            document.getElementById('actions-dropdown-box').classList.toggle('hidden');
         }
 
         function clearDateFilters() {
@@ -368,21 +358,10 @@
             renderActiveAccountDashboard();
         }
 
-        document.addEventListener('click', function(event) {
-            const wrap = document.getElementById('dropdown-menu-wrapper');
-            const menu = document.getElementById('actions-dropdown-box');
-            if (wrap && !wrap.contains(event.target) && menu) {
-                menu.classList.add('hidden');
-            }
-        });
-
         _supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
-                if(currentUser && currentUser.email) {
-                    document.getElementById('header-user-email').innerText = currentUser.email;
-                }
-                if (isRegistering) return; 
+                document.getElementById('header-user-email').innerText = currentUser.email;
                 await fetchUserOrganization();
             } else {
                 currentUser = null; activeOrganization = null;
@@ -393,14 +372,10 @@
 
         async function fetchUserOrganization() {
             try {
-                const { data: memberRows, error: memErr } = await _supabase.from('organization_members').select('organization_id').eq('user_id', currentUser.id);
-                if (memErr) throw memErr;
-
+                const { data: memberRows } = await _supabase.from('organization_members').select('organization_id').eq('user_id', currentUser.id);
                 if (memberRows && memberRows.length > 0) {
                     const orgId = memberRows[0].organization_id;
-                    const { data: orgData, error: orgErr } = await _supabase.from('organizations').select('*').eq('id', orgId).single();
-                    if (orgErr) throw orgErr;
-
+                    const { data: orgData } = await _supabase.from('organizations').select('*').eq('id', orgId).single();
                     activeOrganization = orgData;
                     document.getElementById('active-workspace-display').innerText = activeOrganization.name;
                     document.getElementById('meta-workspace-id').innerText = activeOrganization.id;
@@ -409,14 +384,13 @@
                     document.getElementById('app-screen').classList.remove('hidden');
                     pullDatabaseData();
                 }
-            } catch (err) { alert("Workspace Error: " + err.message); }
+            } catch (err) { console.error(err); }
         }
 
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
-            if (password.length < 6) { alert("Password must be 6+ chars"); return; }
 
             if (authMode === 'signin') {
                 let { error } = await _supabase.auth.signInWithPassword({ email, password });
@@ -426,16 +400,16 @@
                 let targetOrgId = 'biz_' + Math.random().toString(36).substring(2, 9);
                 let targetOrgName = document.getElementById('business-name').value.trim();
 
-                isRegistering = true;
                 let { data: signUpData, error: signUpErr } = await _supabase.auth.signUp({ email, password });
-                if (signUpErr) { alert(signUpErr.message); isRegistering = false; return; }
+                if (signUpErr) { alert(signUpErr.message); return; }
 
                 if (signUpData && signUpData.user) {
                     if (action === 'create') {
                         await _supabase.from('organizations').insert([{ id: targetOrgId, name: targetOrgName }]);
+                    } else {
+                        targetOrgId = document.getElementById('business-id').value.trim();
                     }
                     await _supabase.from('organization_members').insert([{ user_id: signUpData.user.id, organization_id: targetOrgId }]);
-                    isRegistering = false;
                     location.reload();
                 }
             }
@@ -444,38 +418,24 @@
         async function pullDatabaseData() {
             if (!currentUser || !activeOrganization) return;
             try {
-                const { data: accounts, error: accErr } = await _supabase.from('accounts').select('*').eq('organization_id', activeOrganization.id);
-                const { data: expenses, error: expErr } = await _supabase.from('expenses').select('*').eq('organization_id', activeOrganization.id);
-                const { data: funding, error: fundErr } = await _supabase.from('funding_logs').select('*').eq('organization_id', activeOrganization.id);
+                const { data: accounts } = await _supabase.from('accounts').select('*').eq('organization_id', activeOrganization.id);
+                const { data: expenses } = await _supabase.from('expenses').select('*').eq('organization_id', activeOrganization.id);
+                const { data: funding } = await _supabase.from('funding_logs').select('*').eq('organization_id', activeOrganization.id);
 
-                if (accErr || expErr || fundErr) throw (accErr || expErr || fundErr);
-
-                appState.accounts = accounts.map(acc => ({
+                appState.accounts = (accounts || []).map(acc => ({
                     ...acc,
-                    expenses: expenses.filter(exp => exp.account_id === acc.id),
-                    funding: funding.filter(f => f.account_id === acc.id)
+                    expenses: (expenses || []).filter(exp => exp.account_id === acc.id),
+                    funding: (funding || []).filter(f => f.account_id === acc.id)
                 }));
 
                 if (appState.accounts.length > 0 && !appState.activeAccountId) {
                     appState.activeAccountId = appState.accounts[0].id;
                 }
                 render();
-            } catch (err) { alert("Data Loading Error: " + err.message); }
+            } catch (err) { console.error(err); }
         }
 
-        function getFilteredExpenses(activeAcc) {
-            if (!activeAcc) return [];
-            const startDateStr = document.getElementById('filter-start-date').value;
-            const endDateStr = document.getElementById('filter-end-date').value;
-            let result = [...activeAcc.expenses];
-            if (startDateStr) result = result.filter(exp => new Date(exp.date) >= new Date(startDateStr));
-            if (endDateStr) result = result.filter(exp => new Date(exp.date) <= new Date(endDateStr));
-            return result.sort((a,b) => new Date(b.date) - new Date(a.date));
-        }
-
-        function render() { renderAccountsList(); renderActiveAccountDashboard(); }
-
-        function renderAccountsList() {
+        function render() {
             const listContainer = document.getElementById('accounts-list');
             listContainer.innerHTML = '';
             appState.accounts.forEach(acc => {
@@ -484,71 +444,99 @@
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-white border-slate-100'}`;
+                card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
                 card.onclick = () => { appState.activeAccountId = acc.id; render(); };
                 card.innerHTML = `
                     <div>
                         <h4 class="font-bold text-slate-900 text-sm">${acc.name}</h4>
-                        <p class="text-xs text-slate-500">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</p>
-                    </div>`;
+                        <p class="text-xs text-slate-500">Seed Base: ${formatCurrency(acc.funds)}</p>
+                    </div>
+                    <span class="text-xs font-bold text-slate-700">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</span>`;
                 listContainer.appendChild(card);
             });
+
+            renderActiveAccountDashboard();
         }
 
         function renderActiveAccountDashboard() {
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
-            const startingFundsDisplay = document.getElementById('dashboard-starting-funds');
             const fundsDisplay = document.getElementById('dashboard-funds');
             const expensesDisplay = document.getElementById('dashboard-expenses');
-            const historyList = document.getElementById('funding-history-list');
-            const tableBody = document.getElementById('expenses-table-body');
-
-            tableBody.innerHTML = ''; 
-            historyList.innerHTML = '';
-
-            if (!activeAcc) return;
-
-            const filteredExpenses = getFilteredExpenses(activeAcc);
-            const totalFilteredExpenses = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-            const overallExpenses = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-            const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
+            const activeAccName = document.getElementById('active-account-name');
             
-            startingFundsDisplay.innerText = formatCurrency(activeAcc.funds);
-            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - overallExpenses);
-            expensesDisplay.innerText = formatCurrency(totalFilteredExpenses);
+            const fundingBody = document.getElementById('funding-table-body');
+            const expensesBody = document.getElementById('expenses-table-body');
 
-            // Render Funding History Log Panel
-            if (activeAcc.funding.length === 0) {
-                historyList.innerHTML = `<p class="text-slate-400 italic">No added cash logged yet.</p>`;
-            } else {
-                // Sort funding additions newest first
-                const sortedFunding = [...activeAcc.funding].sort((a,b) => new Date(b.date) - new Date(a.date));
-                sortedFunding.forEach(f => {
-                    const item = document.createElement('div');
-                    item.className = "flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-100";
-                    item.innerHTML = `
-                        <span class="text-slate-500 font-medium">${f.date}</span>
-                        <span class="font-bold text-emerald-600">+${formatCurrency(f.amount)}</span>`;
-                    historyList.appendChild(item);
-                });
+            fundingBody.innerHTML = ''; expensesBody.innerHTML = '';
+
+            if (!activeAcc) {
+                activeAccName.innerText = "No account active";
+                return;
             }
 
-            // Render Table Ledger
+            activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name}`;
+
+            const startDateStr = document.getElementById('filter-start-date').value;
+            const endDateStr = document.getElementById('filter-end-date').value;
+
+            // Filter Funding Data
+            let filteredFunding = [...activeAcc.funding];
+            if (startDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) >= new Date(startDateStr));
+            if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
+            filteredFunding.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            // Filter Expense Data
+            let filteredExpenses = [...activeAcc.expenses];
+            if (startDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) >= new Date(startDateStr));
+            if (endDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) <= new Date(endDateStr));
+            filteredExpenses.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
+            const totalExpensesTotal = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            
+            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal);
+            expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0));
+
+            // Toggle empty display notifications
+            document.getElementById('no-funding-msg').classList.toggle('hidden', filteredFunding.length > 0);
+            document.getElementById('no-expenses-msg').classList.toggle('hidden', filteredExpenses.length > 0);
+
+            // Populate Funding Addition Rows
+            filteredFunding.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-slate-500 font-medium">${f.date}</td>
+                    <td class="py-3 px-4 font-bold text-emerald-600">+${formatCurrency(f.amount)}</td>
+                    <td class="py-3 px-4 text-right"><button onclick="deleteFundingLog('${f.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
+                fundingBody.appendChild(tr);
+            });
+
+            // Populate Expense Rows
             filteredExpenses.forEach(exp => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-medium text-slate-900">${exp.category}</td>
-                    <td class="py-3.5 px-6 text-slate-500">${exp.date}</td>
-                    <td class="py-3.5 px-6 font-semibold text-rose-600">-${formatCurrency(exp.amount)}</td>
-                    <td class="py-3.5 px-6 text-right"><button onclick="deleteExpense('${exp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td>`;
-                tableBody.appendChild(tr);
+                    <td class="py-3 px-4 font-semibold text-slate-900">${exp.category}</td>
+                    <td class="py-3 px-4 text-slate-500">${exp.date}</td>
+                    <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount)}</td>
+                    <td class="py-3 px-4 text-right"><button onclick="deleteExpense('${exp.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
+                expensesBody.appendChild(tr);
             });
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openAccountModal() { document.getElementById('account-form').reset(); openModal('account-modal'); }
-        
+        function openFundsModal() { 
+            document.getElementById('funds-form').reset(); 
+            document.getElementById('fund-date').value = new Date().toISOString().split('T')[0];
+            openModal('funds-modal'); 
+        }
+        function openExpenseModal() { 
+            document.getElementById('expense-form').reset(); 
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; 
+            openModal('expense-modal'); 
+        }
+
         async function saveAccount(e) {
             e.preventDefault();
             const name = document.getElementById('account-name').value.trim();
@@ -558,12 +546,6 @@
             closeModal('account-modal'); pullDatabaseData();
         }
 
-        function openFundsModal() { 
-            document.getElementById('funds-form').reset(); 
-            document.getElementById('fund-date').value = new Date().toISOString().split('T')[0];
-            openModal('funds-modal'); 
-        }
-
         async function addFundsSubmit(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('fund-amount').value);
@@ -571,24 +553,12 @@
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             
             if (activeAcc && amount > 0) {
-                const logId = 'fund_' + Date.now().toString(36);
-                // Insert distinct history row into database log
                 await _supabase.from('funding_logs').insert([{
-                    id: logId,
-                    account_id: activeAcc.id,
-                    amount: amount,
-                    date: date,
-                    user_id: currentUser.id,
-                    organization_id: activeOrganization.id
+                    id: 'fund_' + Date.now().toString(36), account_id: activeAcc.id, amount, date,
+                    user_id: currentUser.id, organization_id: activeOrganization.id
                 }]);
                 closeModal('funds-modal'); pullDatabaseData();
             }
-        }
-
-        function openExpenseModal() { 
-            document.getElementById('expense-form').reset(); 
-            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; 
-            openModal('expense-modal'); 
         }
 
         async function saveExpense(e) {
@@ -598,29 +568,26 @@
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             if (!activeAcc) return;
 
-            const overallExpenses = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-            const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
-            const absoluteAvailableFunds = activeAcc.funds + totalAddedFunds - overallExpenses;
-
-            if (amount > absoluteAvailableFunds) {
-                alert("❌ Insufficient Funds! Please add funds before logging this expense.");
-                return;
-            }
-
-            let category = document.getElementById('expense-category').value;
-            const id = 'exp_' + Date.now().toString(36);
+            const category = document.getElementById('expense-category').value;
             await _supabase.from('expenses').insert([{ 
-                id, account_id: appState.activeAccountId, amount, date, category, 
+                id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
                 user_id: currentUser.id, organization_id: activeOrganization.id
             }]);
             closeModal('expense-modal'); pullDatabaseData();
         }
 
         async function deleteExpense(id) {
-            if (confirm("Erase entry row context?")) {
+            if (confirm("Remove this entry line?")) {
                 await _supabase.from('expenses').delete().eq('id', id); pullDatabaseData();
             }
         }
+
+        async function deleteFundingLog(id) {
+            if (confirm("Remove this deposit entry row?")) {
+                await _supabase.from('funding_logs').delete().eq('id', id); pullDatabaseData();
+            }
+        }
+
         async function handleSignOut() { await _supabase.auth.signOut(); location.reload(); }
     </script>
 </body>
