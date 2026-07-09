@@ -14,13 +14,11 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen antialiased">
 
-    <!-- MULTI-TENANT AUTHENTICATION SCREEN -->
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md my-auto">
             <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight text-center">WealthFlow</h2>
             <p class="text-center text-sm text-slate-500 mt-1 mb-6">Multi-Tenant Business Workspace Engine</p>
             
-            <!-- Toggle between Login and Signup modes -->
             <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
                 <button onclick="setAuthMode('signin')" id="btn-mode-signin" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-slate-900 shadow-sm transition">Sign In</button>
                 <button onclick="setAuthMode('signup')" id="btn-mode-signup" class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 transition">Register Business</button>
@@ -36,7 +34,6 @@
                     <input type="password" id="auth-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
-                <!-- BUSINESS WORKSPACE SIGNUP FIELDS (Hidden during standard Sign-In) -->
                 <div id="signup-business-group" class="hidden space-y-4 pt-2 border-t border-slate-100">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Workspace Setup Action</label>
@@ -60,9 +57,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP SCREEN -->
     <div id="app-screen" class="hidden max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-        <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-5 border-b border-slate-200">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">WealthFlow</h1>
@@ -86,7 +81,6 @@
             </div>
         </header>
 
-        <!-- Main Grid Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <aside class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -95,7 +89,6 @@
                     </h2>
                     <div id="accounts-list" class="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 ios-scroll snap-x"></div>
                 </div>
-                <!-- Workspace Meta Copy Snippet Card -->
                 <div class="bg-slate-900 text-slate-400 p-4 rounded-xl text-xs space-y-1">
                     <p class="font-bold text-white uppercase tracking-wider mb-1">Share Access Link</p>
                     <p>To let other users join this database workspace during signup, provide them your unique workspace code:</p>
@@ -147,12 +140,10 @@
         </div>
     </div>
 
-    <!-- Floating Mobile Add Trigger -->
     <div class="sm:hidden fixed bottom-5 right-5 z-40">
         <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
     </div>
 
-    <!-- CREATE ACCOUNT MODAL -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Create New Account</h3>
@@ -176,7 +167,6 @@
         </div>
     </div>
 
-    <!-- TOP UP CASH MODAL -->
     <div id="funds-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Top Up Funds</h3>
@@ -193,7 +183,6 @@
         </div>
     </div>
 
-    <!-- LOG EXPENSE MODAL -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Log Expense</h3>
@@ -235,7 +224,6 @@
         </div>
     </div>
 
-    <!-- ENGINE CORE MULTI-TENANT SYNC SCRIPT -->
     <script>
         // ================= CONFIGURE KEYS HERE =================
         const SUPABASE_URL = 'https://tddhakuikdnmbouxxxww.supabase.co'; 
@@ -244,13 +232,12 @@
 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
-        let activeOrganization = null; // Track current user's bound business profile
+        let activeOrganization = null; 
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
         const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-        // Control signup vs login visibility state UI
         function setAuthMode(mode) {
             authMode = mode;
             const bizGroup = document.getElementById('signup-business-group');
@@ -302,7 +289,6 @@
 
         async function fetchUserOrganization() {
             try {
-                // Determine user workspace access binding row
                 const { data: memberRows, error: memErr } = await _supabase.from('organization_members').select('organization_id').eq('user_id', currentUser.id);
                 if (memErr) throw memErr;
 
@@ -341,7 +327,7 @@
                 let { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) { alert("Access Denied: " + error.message); btn.disabled = false; btn.innerText = "Sign In"; }
             } else {
-                // SIGNUP MODE - STEP 1: If joining existing, parse validation first
+                // SIGNUP MODE
                 const action = document.getElementById('business-action').value;
                 let targetOrgId = 'biz_' + Math.random().toString(36).substring(2, 9);
                 let targetOrgName = document.getElementById('business-name').value.trim();
@@ -357,25 +343,34 @@
                     targetOrgName = checkOrg[0].name;
                 }
 
-                // STEP 2: Core User Account Auth Profile Build
+                // STEP 1: Insert the organization row FIRST if creating a new one
+                if (action === 'create') {
+                    if (!targetOrgName) { alert("Please enter a business name."); btn.disabled = false; return; }
+                    const { error: orgCreateErr } = await _supabase.from('organizations').insert([{ id: targetOrgId, name: targetOrgName }]);
+                    if (orgCreateErr) { alert("Org Creation Error: " + orgCreateErr.message); btn.disabled = false; return; }
+                }
+
+                // STEP 2: Create the user auth account
                 let { data: signUpData, error: signUpErr } = await _supabase.auth.signUp({ email, password });
                 if (signUpErr) { alert(signUpErr.message); btn.disabled = false; return; }
 
                 if (signUpData && signUpData.user) {
                     const newUserId = signUpData.user.id;
 
-                    // STEP 3: If creating organization, push registration record row
-                    if (action === 'create') {
-                        const { error: orgCreateErr } = await _supabase.from('organizations').insert([{ id: targetOrgId, name: targetOrgName }]);
-                        if (orgCreateErr) { alert(orgCreateErr.message); btn.disabled = false; return; }
-                    }
-
-                    // STEP 4: Bind freshly provisioned User ID rows context to target Organization ID
+                    // STEP 3: Link user to organization
                     const { error: memBindErr } = await _supabase.from('organization_members').insert([{ user_id: newUserId, organization_id: targetOrgId }]);
-                    if (memBindErr) { alert(memBindErr.message); btn.disabled = false; return; }
+                    if (memBindErr) { 
+                        alert("Membership Binding Error: " + memBindErr.message); 
+                        btn.disabled = false; 
+                        return; 
+                    }
                     
-                    // Force refresh cycle
+                    alert("Account and workspace configured successfully!");
                     location.reload();
+                } else {
+                    alert("Signup successful! Please confirm your account if required by your settings.");
+                    btn.disabled = false;
+                    btn.innerText = "Register & Boot Workspace";
                 }
             }
         }
@@ -385,7 +380,6 @@
         async function pullDatabaseData() {
             if (!currentUser || !activeOrganization) return;
             try {
-                // Core isolated relational entity queries scoped strictly to active organization id context
                 const { data: accounts, error: accErr } = await _supabase.from('accounts').select('*').eq('organization_id', activeOrganization.id);
                 const { data: expenses, error: expErr } = await _supabase.from('expenses').select('*').eq('organization_id', activeOrganization.id);
 
@@ -404,7 +398,6 @@
             } catch (err) { alert("Data Engine Loading Error: " + err.message); }
         }
 
-        // EXPLICIT JSON FILE PARSER MIGRATION EXTENSION FOR BUSINESS STRUCTURES
         async function importOldJSON(event) {
             const file = event.target.files[0];
             if (!file || !currentUser || !activeOrganization) return;
