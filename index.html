@@ -61,13 +61,18 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-5 border-b border-slate-200">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">WealthFlow</h1>
-                <div class="flex items-center gap-2 mt-0.5">
-                    <p id="user-display" class="text-xs font-semibold text-emerald-600"><i class="fa-solid fa-cloud"></i> Connected Live</p>
+                <div class="flex flex-wrap items-center gap-2 mt-0.5 text-xs">
+                    <p id="user-display" class="font-semibold text-emerald-600 flex items-center gap-1">
+                        <i class="fa-solid fa-cloud"></i> <span id="header-user-email">Loading identity...</span>
+                    </p>
                     <span class="text-slate-300">|</span>
-                    <p id="active-workspace-display" class="text-xs font-bold text-blue-600 uppercase tracking-wider"></p>
+                    <p id="active-workspace-display" class="font-bold text-blue-600 uppercase tracking-wider"></p>
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                <button onclick="openPasswordModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3.5 rounded-xl text-sm transition flex items-center justify-center gap-2" title="Change Account Password">
+                    <i class="fa-solid fa-lock text-slate-500"></i>
+                </button>
                 <label class="cursor-pointer bg-amber-500 active:bg-amber-600 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-file-import"></i> Import JSON
                     <input type="file" id="json-import-file" accept=".json" class="hidden" onchange="importOldJSON(event)">
@@ -142,6 +147,29 @@
 
     <div class="sm:hidden fixed bottom-5 right-5 z-40">
         <button onclick="openExpenseModal()" id="mobile-floating-btn" disabled class="w-14 h-14 bg-slate-900 text-white rounded-full shadow-lg flex items-center justify-center text-xl"><i class="fa-solid fa-plus"></i></button>
+    </div>
+
+    <div id="password-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Update Security Token</h3>
+            <p class="text-xs text-slate-500 mb-4">Provide a new encryption pass phrase key for your authentication token profile.</p>
+            <form id="password-form" onsubmit="handleUpdatePassword(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">New Password</label>
+                        <input type="password" id="new-password" required minlength="6" placeholder="At least 6 characters" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Confirm New Password</label>
+                        <input type="password" id="confirm-new-password" required minlength="6" placeholder="Repeat passphrase" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('password-modal')" class="w-full sm:w-auto px-4 py-3 text-slate-500 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" id="password-submit-btn" class="w-full sm:w-auto px-4 py-3 text-white bg-slate-900 rounded-xl">Update Password</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
@@ -280,6 +308,12 @@
         _supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
                 currentUser = session.user;
+                
+                // Inject user email address directly onto header element node
+                if(currentUser && currentUser.email) {
+                    document.getElementById('header-user-email').innerText = currentUser.email;
+                }
+
                 if (isRegistering) return; 
                 await fetchUserOrganization();
             } else {
@@ -289,7 +323,6 @@
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('hidden');
                 
-                // Clear state triggers to unlock the submit buttons for subsequent auth loops
                 const authBtn = document.getElementById('auth-btn');
                 if (authBtn) {
                     authBtn.disabled = false;
@@ -387,6 +420,34 @@
                     isRegistering = false;
                     btn.innerText = "Register & Boot Workspace";
                 }
+            }
+        }
+
+        function openPasswordModal() {
+            document.getElementById('password-form').reset();
+            openModal('password-modal');
+        }
+
+        async function handleUpdatePassword(e) {
+            e.preventDefault();
+            const nPass = document.getElementById('new-password').value;
+            const cPass = document.getElementById('confirm-new-password').value;
+            const pBtn = document.getElementById('password-submit-btn');
+
+            if(nPass !== cPass) { alert("Passwords do not match!"); return; }
+            if(nPass.length < 6) { alert("Password must be at least 6 characters long!"); return; }
+
+            pBtn.disabled = true; pBtn.innerText = "Updating Crypt Token...";
+
+            const { error } = await _supabase.auth.updateUser({ password: nPass });
+            
+            pBtn.disabled = false; pBtn.innerText = "Update Password";
+
+            if(error) {
+                alert("Security Update Error: " + error.message);
+            } else {
+                alert("Password token updated successfully!");
+                closeModal('password-modal');
             }
         }
 
