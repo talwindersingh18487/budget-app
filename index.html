@@ -565,19 +565,44 @@
         }
 
         async function addFundsSubmit(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('fund-amount').value);
-            const date = document.getElementById('fund-date').value;
-            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
-            
-            if (activeAcc && amount > 0) {
-                await _supabase.from('funding_logs').insert([{
-                    id: 'fund_' + Date.now().toString(36), account_id: activeAcc.id, amount, date,
-                    user_id: currentUser.id, organization_id: activeOrganization.id
-                }]);
-                closeModal('funds-modal'); pullDatabaseData();
-            }
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('fund-amount').value);
+    const date = document.getElementById('fund-date').value;
+    const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+    
+    if (!activeAcc) {
+        alert("Please select or create an active account first.");
+        return;
+    }
+
+    if (amount <= 0) {
+        alert("Please enter an amount greater than 0.");
+        return;
+    }
+
+    try {
+        const { data, error } = await _supabase.from('funding_logs').insert([{
+            id: 'fund_' + Date.now().toString(36), 
+            account_id: activeAcc.id, 
+            amount, 
+            date,
+            user_id: currentUser.id, 
+            organization_id: activeOrganization.id
+        }]);
+
+        if (error) {
+            console.error("Supabase Insertion Error:", error);
+            alert(`Database Error: ${error.message}\nDetails: ${error.details || 'None'}`);
+            return;
         }
+
+        closeModal('funds-modal'); 
+        await pullDatabaseData();
+    } catch (err) {
+        console.error("Runtime Error:", err);
+        alert("An unexpected application error occurred. Check browser console.");
+    }
+}
 
         async function saveExpense(e) {
             e.preventDefault();
