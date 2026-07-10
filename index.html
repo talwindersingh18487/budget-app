@@ -88,6 +88,9 @@
                             <i class="fa-solid fa-cloud-arrow-up text-blue-500 w-4"></i> Upload Workspace Data
                             <input type="file" id="json-import-file-dropdown" accept=".json" class="hidden" onchange="importOldJSON(event)">
                         </label>
+                        <button onclick="openFundingLogWindow()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
+                            <i class="fa-solid fa-money-bill-trend-up text-emerald-500 w-4"></i> Cash Additions Log
+                        </button>
                         <hr class="border-slate-100 my-1">
                         <button onclick="exportToCSV()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
                             <i class="fa-solid fa-file-csv text-emerald-500 w-4"></i> Download CSV
@@ -131,7 +134,7 @@
                     <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl text-white shadow-md relative overflow-hidden flex flex-col justify-between">
                         <div>
                             <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
-                            <h3 id="dashboard-funds" class="text-3xl font-black mt-1">$0.00</h3>
+                            <h3 id="dashboard-funds" class="text-3xl font-black mt-1">₹0.00</h3>
                         </div>
                         <div class="mt-4">
                             <button onclick="openFundsModal()" class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2 px-4 rounded-xl backdrop-blur-sm transition">Top Up Balance</button>
@@ -140,7 +143,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses</p>
-                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">$0.00</h3>
+                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">₹0.00</h3>
                         </div>
                         <p id="active-account-name" class="text-xs text-slate-500 mt-4 italic truncate">No account selected</p>
                     </div>
@@ -159,53 +162,37 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
-                                <i class="fa-solid fa-circle-plus text-emerald-600"></i> Cash Additions Log
-                            </h3>
-                        </div>
-                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
-                                    <tr>
-                                        <th class="py-3 px-4">Date</th>
-                                        <th class="py-3 px-4">Amount</th>
-                                        <th class="py-3 px-4 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="funding-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                            </table>
-                            <div id="no-funding-msg" class="p-6 text-center text-slate-400 italic hidden">No funds added yet.</div>
-                        </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center h-[53px]">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                            <i class="fa-solid fa-circle-minus text-rose-600"></i> Expense Ledger
+                        </h3>
+                        <button onclick="openExpenseModal()" id="add-expense-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 px-3 rounded-lg text-xs transition">Add Row</button>
                     </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center h-[53px]">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
-                                <i class="fa-solid fa-circle-minus text-rose-600"></i> Expense Ledger
-                            </h3>
-                            <button onclick="openExpenseModal()" id="add-expense-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 px-3 rounded-lg text-xs transition">Add Row</button>
-                        </div>
-                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
-                                    <tr>
-                                        <th class="py-3 px-4">Category</th>
-                                        <th class="py-3 px-4">Date</th>
-                                        <th class="py-3 px-4">Amount</th>
-                                        <th class="py-3 px-4 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                            </table>
-                            <div id="no-expenses-msg" class="p-6 text-center text-slate-400 italic hidden">No expenses logged.</div>
-                        </div>
+                    <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+                                <tr>
+                                    <th class="py-3 px-4">Category</th>
+                                    <th class="py-3 px-4">Date</th>
+                                    <th class="py-3 px-4">Amount</th>
+                                    <th class="py-3 px-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
+                        <div id="no-expenses-msg" class="p-6 text-center text-slate-400 italic hidden">No expenses logged.</div>
                     </div>
                 </div>
             </main>
         </div>
+    </div>
+
+    <div id="hidden-funding-table-container" class="hidden">
+        <table class="w-full text-left">
+            <tbody id="funding-table-body"></tbody>
+        </table>
+        <div id="no-funding-msg" class="hidden"></div>
     </div>
 
     <div id="password-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
@@ -226,6 +213,7 @@
         </div>
     </div>
 
+    <!-- ACCOUNT PORTFOLIO MODAL: INR NOW HAS THE 'selected' ATTRIBUTE TO LOAD AS DEFAULT -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
@@ -235,9 +223,21 @@
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Description Name</label>
                         <input type="text" id="account-name" required placeholder="e.g., Primary Cash Vault" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Base Seed Funds ($)</label>
-                        <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Base Seed Funds</label>
+                            <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Currency Portfolio</label>
+                            <select id="account-currency" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12 text-sm font-semibold">
+                                <option value="INR" selected>INR (₹) - Indian Rupee</option>
+                                <option value="CAD">CAD ($) - Canadian Dollar</option>
+                                <option value="USD">USD ($) - US Dollar</option>
+                                <option value="EUR">EUR (€) - Euro</option>
+                                <option value="GBP">GBP (£) - British Pound</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
@@ -254,7 +254,7 @@
             <form id="funds-form" onsubmit="addFundsSubmit(event)">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount to Add ($)</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount to Add</label>
                         <input type="number" id="fund-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                     <div>
@@ -277,7 +277,7 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount ($)</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount</label>
                             <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                         </div>
                         <div>
@@ -315,7 +315,13 @@
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
-        const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        // GLOBAL FALLBACK KEY RECONFIGURED TO 'INR'
+        const formatCurrency = (amount, currencyCode = 'INR') => {
+            return new Intl.NumberFormat('en-IN', { 
+                style: 'currency', 
+                currency: currencyCode 
+            }).format(amount);
+        };
 
         function setAuthMode(mode) {
             authMode = mode;
@@ -443,14 +449,20 @@
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
+                // FALLBACK KEY ASSIGNED TO INR
+                const currency = acc.currency || 'INR';
+                
                 const card = document.createElement('div');
                 card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
                 
                 card.innerHTML = `
                     <div onclick="appState.activeAccountId = '${acc.id}'; render();" class="flex-1">
-                        <h4 class="font-bold text-slate-900 text-sm">${acc.name}</h4>
-                        <p class="text-xs text-slate-500">Seed Base: ${formatCurrency(acc.funds)}</p>
-                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</span>
+                        <div class="flex items-center gap-1.5">
+                            <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Seed Base: ${formatCurrency(acc.funds, currency)}</p>
+                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses, currency)}</span>
                     </div>
                     <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition pl-2">
                         <i class="fa-solid fa-trash-can"></i>
@@ -474,12 +486,13 @@
 
             if (!activeAcc) {
                 activeAccName.innerText = "No account active";
-                fundsDisplay.innerText = formatCurrency(0);
-                expensesDisplay.innerText = formatCurrency(0);
+                fundsDisplay.innerText = formatCurrency(0, 'INR');
+                expensesDisplay.innerText = formatCurrency(0, 'INR');
                 return;
             }
 
-            activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name}`;
+            const currency = activeAcc.currency || 'INR';
+            activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name} (${currency})`;
 
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
@@ -499,8 +512,8 @@
             const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
             const totalExpensesTotal = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
             
-            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal);
-            expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0));
+            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal, currency);
+            expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0), currency);
 
             // Toggle empty display notifications
             document.getElementById('no-funding-msg').classList.toggle('hidden', filteredFunding.length > 0);
@@ -511,7 +524,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-slate-500 font-medium">${f.date}</td>
-                    <td class="py-3 px-4 font-bold text-emerald-600">+${formatCurrency(f.amount)}</td>
+                    <td class="py-3 px-4 font-bold text-emerald-600">+${formatCurrency(f.amount, currency)}</td>
                     <td class="py-3 px-4 text-right"><button onclick="deleteFundingLog('${f.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
                 fundingBody.appendChild(tr);
             });
@@ -522,31 +535,152 @@
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-semibold text-slate-900">${exp.category}</td>
                     <td class="py-3 px-4 text-slate-500">${exp.date}</td>
-                    <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount)}</td>
+                    <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount, currency)}</td>
                     <td class="py-3 px-4 text-right"><button onclick="deleteExpense('${exp.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
                 expensesBody.appendChild(tr);
             });
         }
 
-        // --- PASSWORD CHANGES ACTION REPAIR ENGINE ---
-        function openPasswordModal() {
-            document.getElementById('password-form').reset();
-            openModal('password-modal');
+        // --- POPUP WINDOW CASH ADDITIONS LOG ENGINE ---
+        function openFundingLogWindow() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (!activeAcc) {
+                alert("Please select an active workspace portfolio first.");
+                return;
+            }
+
+            const currency = activeAcc.currency || 'INR';
+            const startDateStr = document.getElementById('filter-start-date').value;
+            const endDateStr = document.getElementById('filter-end-date').value;
+
+            let filteredFunding = [...activeAcc.funding];
+            if (startDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) >= new Date(startDateStr));
+            if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
+            filteredFunding.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let rowsHTML = '';
+            if (filteredFunding.length === 0) {
+                rowsHTML = `<tr><td colspan="2" style="padding: 24px; text-align: center; color: #94a3b8; font-style: italic;">No cash injections logged.</td></tr>`;
+            } else {
+                filteredFunding.forEach(f => {
+                    rowsHTML += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px 16px; color: #64748b; font-weight: 500;">${f.date}</td>
+                            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">+${formatCurrency(f.amount, currency)}</td>
+                        </tr>`;
+                });
+            }
+
+            const logWindow = window.open("", "CashAdditionsLogWindow", "width=520,height=620,scrollbars=yes,resizable=yes");
+            if (!logWindow) {
+                alert("Popup Blocked! Please turn off your browser popup-blocker to inspect the additions window log.");
+                return;
+            }
+
+            logWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Cash Additions Ledger - ${activeAcc.name}</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                </head>
+                <body class="bg-slate-50 p-6 font-sans text-slate-800">
+                    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center">
+                            <div>
+                                <h3 class="text-md font-bold tracking-wide flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-plus text-emerald-400"><\/i> Cash Additions Log (${currency})
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[280px]">${activeAcc.name}</p>
+                            </div>
+                            <button onclick="window.print()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-semibold transition">
+                                <i class="fa-solid fa-print"><\/i> Print
+                            </button>
+                        </div>
+                        <div class="p-4 bg-slate-50 text-[11px] text-slate-500 border-b border-slate-100 flex justify-between">
+                            <span>Timeline Bounds:</span>
+                            <span class="font-medium text-slate-700">${startDateStr || 'All Inception'} &rarr; ${endDateStr || 'Present'}</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[420px]">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0 border-b border-slate-100">
+                                    <tr>
+                                        <th class="py-3 px-4">Date Added</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${rowsHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t border-slate-100 bg-slate-50 text-right">
+                            <button onclick="window.close()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition">Close Window</button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            logWindow.document.close();
         }
 
-        async function handleUpdatePassword(e) {
-            e.preventDefault();
-            const newPassword = document.getElementById('new-password').value;
-
-            try {
-                const { error } = await _supabase.auth.updateUser({ password: newPassword });
-                if (error) throw error;
-                
-                alert("Success: Security credentials updated successfully!");
-                closeModal('password-modal');
-            } catch (err) {
-                alert("Security Update Failed:\n" + err.message);
+        // --- CSV EXPORT CONVERTOR ENGINE ---
+        function exportToCSV() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (!activeAcc) {
+                alert("Select an account ledger line profile to download data lists.");
+                return;
             }
+
+            const currency = activeAcc.currency || 'INR';
+            let csvRows = [];
+            csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')} (${currency})"`);
+            csvRows.push(""); 
+
+            // Section 1: Funding Logs
+            csvRows.push('"CASH ADDITIONS HISTORY"');
+            csvRows.push('"Date Added","Injected Amount"');
+            if (activeAcc.funding.length === 0) {
+                csvRows.push('"No allocations logged",0');
+            } else {
+                activeAcc.funding.forEach(f => {
+                    csvRows.push(`"${f.date}",${f.amount}`);
+                });
+            }
+            csvRows.push(""); 
+
+            // Section 2: Operational Expenses
+            csvRows.push('"OPERATIONAL EXPENSE LEDGER"');
+            csvRows.push('"Category Focus","Transaction Date","Expense Amount"');
+            if (activeAcc.expenses.length === 0) {
+                csvRows.push('"No operational expenses logged","",0');
+            } else {
+                activeAcc.expenses.forEach(e => {
+                    csvRows.push(`"${e.category.replace(/"/g, '""')}","${e.date}",${e.amount}`);
+                });
+            }
+
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `wealthflow_export_${activeAcc.id}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- PDF REPORT PRINTER ENGINE ---
+        function exportToPDF() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            window.print();
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -567,19 +701,30 @@
             e.preventDefault();
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
+            const currency = document.getElementById('account-currency').value;
             const id = 'acc_' + Date.now().toString(36);
-            await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id, organization_id: activeOrganization.id }]);
-            closeModal('account-modal'); pullDatabaseData();
+            
+            try {
+                const { error } = await _supabase.from('accounts').insert([{ 
+                    id, 
+                    name, 
+                    funds: initialFunds, 
+                    currency: currency, 
+                    user_id: currentUser.id, 
+                    organization_id: activeOrganization.id 
+                }]);
+                if(error) throw error;
+                closeModal('account-modal'); pullDatabaseData();
+            } catch(err) { alert("Save Account Failed:\n" + err.message); }
         }
 
         async function deleteAccount(accountId, event) {
             event.stopPropagation(); 
             if (confirm("Permanently erase this ledger account? All corresponding history row logs will be wiped out automatically.")) {
                 try {
-                    await _supabase.from('accounts').delete().eq('id', accountId);
-                    if (appState.activeAccountId === accountId) {
-                        appState.activeAccountId = null;
-                    }
+                    const { error } = await _supabase.from('accounts').delete().eq('id', accountId);
+                    if(error) throw error;
+                    if (appState.activeAccountId === accountId) { appState.activeAccountId = null; }
                     pullDatabaseData();
                 } catch (err) { alert("Error deleting account: " + err.message); }
             }
@@ -591,12 +736,27 @@
             const date = document.getElementById('fund-date').value;
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             
-            if (activeAcc && amount > 0) {
-                await _supabase.from('funding_logs').insert([{
+            if (!activeAcc) {
+                alert("Please establish or click an active ledger wallet profile account first.");
+                return;
+            }
+            if (amount <= 0 || isNaN(amount)) {
+                alert("Please specify a cash amount larger than zero.");
+                return;
+            }
+
+            try {
+                const { error } = await _supabase.from('funding_logs').insert([{
                     id: 'fund_' + Date.now().toString(36), account_id: activeAcc.id, amount, date,
                     user_id: currentUser.id, organization_id: activeOrganization.id
                 }]);
-                closeModal('funds-modal'); pullDatabaseData();
+                
+                if (error) throw error;
+                closeModal('funds-modal'); 
+                await pullDatabaseData();
+            } catch (err) {
+                console.error("Supabase Injection Rejection:", err);
+                alert(`Database Rejection Error:\n${err.message}\n\nEnsure Row Level Security (RLS) contains an INSERT allow statement for funding_logs.`);
             }
         }
 
@@ -608,22 +768,33 @@
             if (!activeAcc) return;
 
             const category = document.getElementById('expense-category').value;
-            await _supabase.from('expenses').insert([{ 
-                id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
-                user_id: currentUser.id, organization_id: activeOrganization.id
-            }]);
-            closeModal('expense-modal'); pullDatabaseData();
+            try {
+                const { error } = await _supabase.from('expenses').insert([{ 
+                    id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
+                    user_id: currentUser.id, organization_id: activeOrganization.id
+                }]);
+                if(error) throw error;
+                closeModal('expense-modal'); pullDatabaseData();
+            } catch(err) { alert("Save Expense Failed:\n" + err.message); }
         }
 
         async function deleteExpense(id) {
             if (confirm("Remove this entry line?")) {
-                await _supabase.from('expenses').delete().eq('id', id); pullDatabaseData();
+                try {
+                    const { error } = await _supabase.from('expenses').delete().eq('id', id);
+                    if(error) throw error;
+                    pullDatabaseData();
+                } catch(err) { alert("Could not delete:\n" + err.message); }
             }
         }
 
         async function deleteFundingLog(id) {
             if (confirm("Remove this deposit entry row?")) {
-                await _supabase.from('funding_logs').delete().eq('id', id); pullDatabaseData();
+                try {
+                    const { error } = await _supabase.from('funding_logs').delete().eq('id', id);
+                    if(error) throw error;
+                    pullDatabaseData();
+                } catch(err) { alert("Could not delete:\n" + err.message); }
             }
         }
 
