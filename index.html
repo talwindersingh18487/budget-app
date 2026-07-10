@@ -213,6 +213,7 @@
         </div>
     </div>
 
+    <!-- UPDATED PORTFOLIO MODAL WITH CURRENCY PICKER OPTION -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
@@ -222,9 +223,21 @@
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Description Name</label>
                         <input type="text" id="account-name" required placeholder="e.g., Primary Cash Vault" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Base Seed Funds ($)</label>
-                        <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Base Seed Funds</label>
+                            <input type="number" id="account-initial-funds" step="0.01" min="0" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Currency Portfolio</label>
+                            <select id="account-currency" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12 text-sm font-semibold">
+                                <option value="CAD">CAD ($) - Canadian Dollar</option>
+                                <option value="USD">USD ($) - US Dollar</option>
+                                <option value="INR">INR (₹) - Indian Rupee</option>
+                                <option value="EUR">EUR (€) - Euro</option>
+                                <option value="GBP">GBP (£) - British Pound</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
@@ -241,7 +254,7 @@
             <form id="funds-form" onsubmit="addFundsSubmit(event)">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount to Add ($)</label>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount to Add</label>
                         <input type="number" id="fund-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                     </div>
                     <div>
@@ -264,7 +277,7 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount ($)</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Amount</label>
                             <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
                         </div>
                         <div>
@@ -302,7 +315,13 @@
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
-        const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        // UPDATED: DYNAMIC CURRENCY CODES FORMATTER ENGINE
+        const formatCurrency = (amount, currencyCode = 'USD') => {
+            return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: currencyCode 
+            }).format(amount);
+        };
 
         function setAuthMode(mode) {
             authMode = mode;
@@ -430,14 +449,20 @@
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
+                // Fallback default token currency configuration if missing
+                const currency = acc.currency || 'USD';
+                
                 const card = document.createElement('div');
                 card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
                 
                 card.innerHTML = `
                     <div onclick="appState.activeAccountId = '${acc.id}'; render();" class="flex-1">
-                        <h4 class="font-bold text-slate-900 text-sm">${acc.name}</h4>
-                        <p class="text-xs text-slate-500">Seed Base: ${formatCurrency(acc.funds)}</p>
-                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses)}</span>
+                        <div class="flex items-center gap-1.5">
+                            <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Seed Base: ${formatCurrency(acc.funds, currency)}</p>
+                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses, currency)}</span>
                     </div>
                     <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition pl-2">
                         <i class="fa-solid fa-trash-can"></i>
@@ -461,12 +486,13 @@
 
             if (!activeAcc) {
                 activeAccName.innerText = "No account active";
-                fundsDisplay.innerText = formatCurrency(0);
-                expensesDisplay.innerText = formatCurrency(0);
+                fundsDisplay.innerText = formatCurrency(0, 'USD');
+                expensesDisplay.innerText = formatCurrency(0, 'USD');
                 return;
             }
 
-            activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name}`;
+            const currency = activeAcc.currency || 'USD';
+            activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name} (${currency})`;
 
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
@@ -486,8 +512,8 @@
             const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
             const totalExpensesTotal = activeAcc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
             
-            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal);
-            expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0));
+            fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal, currency);
+            expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0), currency);
 
             // Toggle empty display notifications
             document.getElementById('no-funding-msg').classList.toggle('hidden', filteredFunding.length > 0);
@@ -498,7 +524,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-slate-500 font-medium">${f.date}</td>
-                    <td class="py-3 px-4 font-bold text-emerald-600">+${formatCurrency(f.amount)}</td>
+                    <td class="py-3 px-4 font-bold text-emerald-600">+${formatCurrency(f.amount, currency)}</td>
                     <td class="py-3 px-4 text-right"><button onclick="deleteFundingLog('${f.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
                 fundingBody.appendChild(tr);
             });
@@ -509,13 +535,13 @@
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-semibold text-slate-900">${exp.category}</td>
                     <td class="py-3 px-4 text-slate-500">${exp.date}</td>
-                    <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount)}</td>
+                    <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount, currency)}</td>
                     <td class="py-3 px-4 text-right"><button onclick="deleteExpense('${exp.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
                 expensesBody.appendChild(tr);
             });
         }
 
-        // --- NEW EXTENSION REQUISITIONS: NEW STANDALONE WINDOW reporting POPUP ENGINE ---
+        // --- POPUP WINDOW CASH ADDITIONS LOG ENGINE ---
         function openFundingLogWindow() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -524,6 +550,7 @@
                 return;
             }
 
+            const currency = activeAcc.currency || 'USD';
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
 
@@ -540,7 +567,7 @@
                     rowsHTML += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 12px 16px; color: #64748b; font-weight: 500;">${f.date}</td>
-                            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">+${formatCurrency(f.amount)}</td>
+                            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">+${formatCurrency(f.amount, currency)}</td>
                         </tr>`;
                 });
             }
@@ -565,7 +592,7 @@
                         <div class="p-5 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center">
                             <div>
                                 <h3 class="text-md font-bold tracking-wide flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-plus text-emerald-400"><\/i> Cash Additions Log
+                                    <i class="fa-solid fa-circle-plus text-emerald-400"><\/i> Cash Additions Log (${currency})
                                 </h3>
                                 <p class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[280px]">${activeAcc.name}</p>
                             </div>
@@ -600,7 +627,7 @@
             logWindow.document.close();
         }
 
-        // --- NEW CSV EXPORT CONVERTOR ENGINE ---
+        // --- CSV EXPORT CONVERTOR ENGINE ---
         function exportToCSV() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -609,9 +636,10 @@
                 return;
             }
 
+            const currency = activeAcc.currency || 'USD';
             let csvRows = [];
-            csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')}"`);
-            csvRows.push(""); // Spacer row
+            csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')} (${currency})"`);
+            csvRows.push(""); 
 
             // Section 1: Funding Logs
             csvRows.push('"CASH ADDITIONS HISTORY"');
@@ -623,7 +651,7 @@
                     csvRows.push(`"${f.date}",${f.amount}`);
                 });
             }
-            csvRows.push(""); // Spacer row
+            csvRows.push(""); 
 
             // Section 2: Operational Expenses
             csvRows.push('"OPERATIONAL EXPENSE LEDGER"');
@@ -649,10 +677,9 @@
             document.body.removeChild(link);
         }
 
-        // --- NEW HIGH-FIDELITY PDF REPORT PRINTER ENGINE ---
+        // --- PDF REPORT PRINTER ENGINE ---
         function exportToPDF() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
-            // Trigger native device document context generation via background stylesheet constraints
             window.print();
         }
 
@@ -670,14 +697,23 @@
             openModal('expense-modal'); 
         }
 
+        // UPDATED: STORES CHOSEN CURRENCY KEY DIRECTLY TO THE DATABASE
         async function saveAccount(e) {
             e.preventDefault();
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
+            const currency = document.getElementById('account-currency').value;
             const id = 'acc_' + Date.now().toString(36);
             
             try {
-                const { error } = await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id, organization_id: activeOrganization.id }]);
+                const { error } = await _supabase.from('accounts').insert([{ 
+                    id, 
+                    name, 
+                    funds: initialFunds, 
+                    currency: currency, 
+                    user_id: currentUser.id, 
+                    organization_id: activeOrganization.id 
+                }]);
                 if(error) throw error;
                 closeModal('account-modal'); pullDatabaseData();
             } catch(err) { alert("Save Account Failed:\n" + err.message); }
@@ -695,7 +731,6 @@
             }
         }
 
-        // UPDATED INJECT FUNDS WITH EXPLICIT TRY...CATCH ERROR ALERTS
         async function addFundsSubmit(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('fund-amount').value);
