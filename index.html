@@ -88,6 +88,9 @@
                             <i class="fa-solid fa-cloud-arrow-up text-blue-500 w-4"></i> Upload Workspace Data
                             <input type="file" id="json-import-file-dropdown" accept=".json" class="hidden" onchange="importOldJSON(event)">
                         </label>
+                        <button onclick="openFundingLogWindow()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
+                            <i class="fa-solid fa-money-bill-trend-up text-emerald-500 w-4"></i> Cash Additions Log
+                        </button>
                         <hr class="border-slate-100 my-1">
                         <button onclick="exportToCSV()" class="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition font-medium">
                             <i class="fa-solid fa-file-csv text-emerald-500 w-4"></i> Download CSV
@@ -159,53 +162,37 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
-                                <i class="fa-solid fa-circle-plus text-emerald-600"></i> Cash Additions Log
-                            </h3>
-                        </div>
-                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
-                                    <tr>
-                                        <th class="py-3 px-4">Date</th>
-                                        <th class="py-3 px-4">Amount</th>
-                                        <th class="py-3 px-4 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="funding-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                            </table>
-                            <div id="no-funding-msg" class="p-6 text-center text-slate-400 italic hidden">No funds added yet.</div>
-                        </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center h-[53px]">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                            <i class="fa-solid fa-circle-minus text-rose-600"></i> Expense Ledger
+                        </h3>
+                        <button onclick="openExpenseModal()" id="add-expense-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 px-3 rounded-lg text-xs transition">Add Row</button>
                     </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center h-[53px]">
-                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
-                                <i class="fa-solid fa-circle-minus text-rose-600"></i> Expense Ledger
-                            </h3>
-                            <button onclick="openExpenseModal()" id="add-expense-btn" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 px-3 rounded-lg text-xs transition">Add Row</button>
-                        </div>
-                        <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
-                                    <tr>
-                                        <th class="py-3 px-4">Category</th>
-                                        <th class="py-3 px-4">Date</th>
-                                        <th class="py-3 px-4">Amount</th>
-                                        <th class="py-3 px-4 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
-                            </table>
-                            <div id="no-expenses-msg" class="p-6 text-center text-slate-400 italic hidden">No expenses logged.</div>
-                        </div>
+                    <div class="overflow-x-auto flex-1 max-h-96 min-h-[200px] ios-scroll">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+                                <tr>
+                                    <th class="py-3 px-4">Category</th>
+                                    <th class="py-3 px-4">Date</th>
+                                    <th class="py-3 px-4">Amount</th>
+                                    <th class="py-3 px-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                        </table>
+                        <div id="no-expenses-msg" class="p-6 text-center text-slate-400 italic hidden">No expenses logged.</div>
                     </div>
                 </div>
             </main>
         </div>
+    </div>
+
+    <div id="hidden-funding-table-container" class="hidden">
+        <table class="w-full text-left">
+            <tbody id="funding-table-body"></tbody>
+        </table>
+        <div id="no-funding-msg" class="hidden"></div>
     </div>
 
     <div id="password-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
@@ -528,6 +515,147 @@
             });
         }
 
+        // --- NEW EXTENSION REQUISITIONS: NEW STANDALONE WINDOW reporting POPUP ENGINE ---
+        function openFundingLogWindow() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (!activeAcc) {
+                alert("Please select an active workspace portfolio first.");
+                return;
+            }
+
+            const startDateStr = document.getElementById('filter-start-date').value;
+            const endDateStr = document.getElementById('filter-end-date').value;
+
+            let filteredFunding = [...activeAcc.funding];
+            if (startDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) >= new Date(startDateStr));
+            if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
+            filteredFunding.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let rowsHTML = '';
+            if (filteredFunding.length === 0) {
+                rowsHTML = `<tr><td colspan="2" style="padding: 24px; text-align: center; color: #94a3b8; font-style: italic;">No cash injections logged.</td></tr>`;
+            } else {
+                filteredFunding.forEach(f => {
+                    rowsHTML += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px 16px; color: #64748b; font-weight: 500;">${f.date}</td>
+                            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">+${formatCurrency(f.amount)}</td>
+                        </tr>`;
+                });
+            }
+
+            const logWindow = window.open("", "CashAdditionsLogWindow", "width=520,height=620,scrollbars=yes,resizable=yes");
+            if (!logWindow) {
+                alert("Popup Blocked! Please turn off your browser popup-blocker to inspect the additions window log.");
+                return;
+            }
+
+            logWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Cash Additions Ledger - ${activeAcc.name}</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                </head>
+                <body class="bg-slate-50 p-6 font-sans text-slate-800">
+                    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 bg-slate-900 text-white flex justify-between items-center">
+                            <div>
+                                <h3 class="text-md font-bold tracking-wide flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-plus text-emerald-400"><\/i> Cash Additions Log
+                                </h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[280px]">${activeAcc.name}</p>
+                            </div>
+                            <button onclick="window.print()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-semibold transition">
+                                <i class="fa-solid fa-print"><\/i> Print
+                            </button>
+                        </div>
+                        <div class="p-4 bg-slate-50 text-[11px] text-slate-500 border-b border-slate-100 flex justify-between">
+                            <span>Timeline Bounds:</span>
+                            <span class="font-medium text-slate-700">${startDateStr || 'All Inception'} &rarr; ${endDateStr || 'Present'}</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[420px]">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0 border-b border-slate-100">
+                                    <tr>
+                                        <th class="py-3 px-4">Date Added</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${rowsHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t border-slate-100 bg-slate-50 text-right">
+                            <button onclick="window.close()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition">Close Window</button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            logWindow.document.close();
+        }
+
+        // --- NEW CSV EXPORT CONVERTOR ENGINE ---
+        function exportToCSV() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if (!activeAcc) {
+                alert("Select an account ledger line profile to download data lists.");
+                return;
+            }
+
+            let csvRows = [];
+            csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')}"`);
+            csvRows.push(""); // Spacer row
+
+            // Section 1: Funding Logs
+            csvRows.push('"CASH ADDITIONS HISTORY"');
+            csvRows.push('"Date Added","Injected Amount"');
+            if (activeAcc.funding.length === 0) {
+                csvRows.push('"No allocations logged",0');
+            } else {
+                activeAcc.funding.forEach(f => {
+                    csvRows.push(`"${f.date}",${f.amount}`);
+                });
+            }
+            csvRows.push(""); // Spacer row
+
+            // Section 2: Operational Expenses
+            csvRows.push('"OPERATIONAL EXPENSE LEDGER"');
+            csvRows.push('"Category Focus","Transaction Date","Expense Amount"');
+            if (activeAcc.expenses.length === 0) {
+                csvRows.push('"No operational expenses logged","",0');
+            } else {
+                activeAcc.expenses.forEach(e => {
+                    csvRows.push(`"${e.category.replace(/"/g, '""')}","${e.date}",${e.amount}`);
+                });
+            }
+
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `wealthflow_export_${activeAcc.id}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- NEW HIGH-FIDELITY PDF REPORT PRINTER ENGINE ---
+        function exportToPDF() {
+            document.getElementById('actions-dropdown-box').classList.add('hidden');
+            // Trigger native device document context generation via background stylesheet constraints
+            window.print();
+        }
+
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openAccountModal() { document.getElementById('account-form').reset(); openModal('account-modal'); }
@@ -547,62 +675,56 @@
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
             const id = 'acc_' + Date.now().toString(36);
-            await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id, organization_id: activeOrganization.id }]);
-            closeModal('account-modal'); pullDatabaseData();
+            
+            try {
+                const { error } = await _supabase.from('accounts').insert([{ id, name, funds: initialFunds, user_id: currentUser.id, organization_id: activeOrganization.id }]);
+                if(error) throw error;
+                closeModal('account-modal'); pullDatabaseData();
+            } catch(err) { alert("Save Account Failed:\n" + err.message); }
         }
 
         async function deleteAccount(accountId, event) {
             event.stopPropagation(); 
             if (confirm("Permanently erase this ledger account? All corresponding history row logs will be wiped out automatically.")) {
                 try {
-                    await _supabase.from('accounts').delete().eq('id', accountId);
-                    if (appState.activeAccountId === accountId) {
-                        appState.activeAccountId = null;
-                    }
+                    const { error } = await _supabase.from('accounts').delete().eq('id', accountId);
+                    if(error) throw error;
+                    if (appState.activeAccountId === accountId) { appState.activeAccountId = null; }
                     pullDatabaseData();
                 } catch (err) { alert("Error deleting account: " + err.message); }
             }
         }
 
+        // UPDATED INJECT FUNDS WITH EXPLICIT TRY...CATCH ERROR ALERTS
         async function addFundsSubmit(e) {
-    e.preventDefault();
-    const amount = parseFloat(document.getElementById('fund-amount').value);
-    const date = document.getElementById('fund-date').value;
-    const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
-    
-    if (!activeAcc) {
-        alert("Please select or create an active account first.");
-        return;
-    }
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('fund-amount').value);
+            const date = document.getElementById('fund-date').value;
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            
+            if (!activeAcc) {
+                alert("Please establish or click an active ledger wallet profile account first.");
+                return;
+            }
+            if (amount <= 0 || isNaN(amount)) {
+                alert("Please specify a cash amount larger than zero.");
+                return;
+            }
 
-    if (amount <= 0) {
-        alert("Please enter an amount greater than 0.");
-        return;
-    }
-
-    try {
-        const { data, error } = await _supabase.from('funding_logs').insert([{
-            id: 'fund_' + Date.now().toString(36), 
-            account_id: activeAcc.id, 
-            amount, 
-            date,
-            user_id: currentUser.id, 
-            organization_id: activeOrganization.id
-        }]);
-
-        if (error) {
-            console.error("Supabase Insertion Error:", error);
-            alert(`Database Error: ${error.message}\nDetails: ${error.details || 'None'}`);
-            return;
+            try {
+                const { error } = await _supabase.from('funding_logs').insert([{
+                    id: 'fund_' + Date.now().toString(36), account_id: activeAcc.id, amount, date,
+                    user_id: currentUser.id, organization_id: activeOrganization.id
+                }]);
+                
+                if (error) throw error;
+                closeModal('funds-modal'); 
+                await pullDatabaseData();
+            } catch (err) {
+                console.error("Supabase Injection Rejection:", err);
+                alert(`Database Rejection Error:\n${err.message}\n\nEnsure Row Level Security (RLS) contains an INSERT allow statement for funding_logs.`);
+            }
         }
-
-        closeModal('funds-modal'); 
-        await pullDatabaseData();
-    } catch (err) {
-        console.error("Runtime Error:", err);
-        alert("An unexpected application error occurred. Check browser console.");
-    }
-}
 
         async function saveExpense(e) {
             e.preventDefault();
@@ -612,22 +734,33 @@
             if (!activeAcc) return;
 
             const category = document.getElementById('expense-category').value;
-            await _supabase.from('expenses').insert([{ 
-                id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
-                user_id: currentUser.id, organization_id: activeOrganization.id
-            }]);
-            closeModal('expense-modal'); pullDatabaseData();
+            try {
+                const { error } = await _supabase.from('expenses').insert([{ 
+                    id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
+                    user_id: currentUser.id, organization_id: activeOrganization.id
+                }]);
+                if(error) throw error;
+                closeModal('expense-modal'); pullDatabaseData();
+            } catch(err) { alert("Save Expense Failed:\n" + err.message); }
         }
 
         async function deleteExpense(id) {
             if (confirm("Remove this entry line?")) {
-                await _supabase.from('expenses').delete().eq('id', id); pullDatabaseData();
+                try {
+                    const { error } = await _supabase.from('expenses').delete().eq('id', id);
+                    if(error) throw error;
+                    pullDatabaseData();
+                } catch(err) { alert("Could not delete:\n" + err.message); }
             }
         }
 
         async function deleteFundingLog(id) {
             if (confirm("Remove this deposit entry row?")) {
-                await _supabase.from('funding_logs').delete().eq('id', id); pullDatabaseData();
+                try {
+                    const { error } = await _supabase.from('funding_logs').delete().eq('id', id);
+                    if(error) throw error;
+                    pullDatabaseData();
+                } catch(err) { alert("Could not delete:\n" + err.message); }
             }
         }
 
