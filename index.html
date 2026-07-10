@@ -685,6 +685,24 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        // --- PASSWORD MODAL FUNCTIONS ---
+        function openPasswordModal() { 
+            document.getElementById('password-form').reset(); 
+            openModal('password-modal'); 
+        }
+
+        async function handleUpdatePassword(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            try {
+                const { error } = await _supabase.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                alert("Password updated successfully!");
+                closeModal('password-modal');
+            } catch (err) {
+                alert("Password Update Failed:\n" + err.message);
+            }
+        }
         function openAccountModal() { document.getElementById('account-form').reset(); openModal('account-modal'); }
         function openFundsModal() { 
             document.getElementById('funds-form').reset(); 
