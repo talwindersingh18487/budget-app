@@ -134,7 +134,7 @@
                     <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl text-white shadow-md relative overflow-hidden flex flex-col justify-between">
                         <div>
                             <p class="text-blue-100 font-medium text-xs uppercase tracking-wider">Available Funds</p>
-                            <h3 id="dashboard-funds" class="text-3xl font-black mt-1">$0.00</h3>
+                            <h3 id="dashboard-funds" class="text-3xl font-black mt-1">₹0.00</h3>
                         </div>
                         <div class="mt-4">
                             <button onclick="openFundsModal()" class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2 px-4 rounded-xl backdrop-blur-sm transition">Top Up Balance</button>
@@ -143,7 +143,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total Expenses</p>
-                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">$0.00</h3>
+                            <h3 id="dashboard-expenses" class="text-3xl font-black mt-1 text-slate-900">₹0.00</h3>
                         </div>
                         <p id="active-account-name" class="text-xs text-slate-500 mt-4 italic truncate">No account selected</p>
                     </div>
@@ -213,7 +213,7 @@
         </div>
     </div>
 
-    <!-- UPDATED PORTFOLIO MODAL WITH CURRENCY PICKER OPTION -->
+    <!-- ACCOUNT PORTFOLIO MODAL: INR NOW HAS THE 'selected' ATTRIBUTE TO LOAD AS DEFAULT -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
@@ -231,9 +231,9 @@
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Currency Portfolio</label>
                             <select id="account-currency" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12 text-sm font-semibold">
+                                <option value="INR" selected>INR (₹) - Indian Rupee</option>
                                 <option value="CAD">CAD ($) - Canadian Dollar</option>
                                 <option value="USD">USD ($) - US Dollar</option>
-                                <option value="INR">INR (₹) - Indian Rupee</option>
                                 <option value="EUR">EUR (€) - Euro</option>
                                 <option value="GBP">GBP (£) - British Pound</option>
                             </select>
@@ -315,9 +315,9 @@
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
-        // UPDATED: DYNAMIC CURRENCY CODES FORMATTER ENGINE
-        const formatCurrency = (amount, currencyCode = 'USD') => {
-            return new Intl.NumberFormat('en-US', { 
+        // GLOBAL FALLBACK KEY RECONFIGURED TO 'INR'
+        const formatCurrency = (amount, currencyCode = 'INR') => {
+            return new Intl.NumberFormat('en-IN', { 
                 style: 'currency', 
                 currency: currencyCode 
             }).format(amount);
@@ -449,8 +449,8 @@
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
-                // Fallback default token currency configuration if missing
-                const currency = acc.currency || 'USD';
+                // FALLBACK KEY ASSIGNED TO INR
+                const currency = acc.currency || 'INR';
                 
                 const card = document.createElement('div');
                 card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
@@ -486,12 +486,12 @@
 
             if (!activeAcc) {
                 activeAccName.innerText = "No account active";
-                fundsDisplay.innerText = formatCurrency(0, 'USD');
-                expensesDisplay.innerText = formatCurrency(0, 'USD');
+                fundsDisplay.innerText = formatCurrency(0, 'INR');
+                expensesDisplay.innerText = formatCurrency(0, 'INR');
                 return;
             }
 
-            const currency = activeAcc.currency || 'USD';
+            const currency = activeAcc.currency || 'INR';
             activeAccName.innerText = `Active Vault Portfolio: ${activeAcc.name} (${currency})`;
 
             const startDateStr = document.getElementById('filter-start-date').value;
@@ -550,7 +550,7 @@
                 return;
             }
 
-            const currency = activeAcc.currency || 'USD';
+            const currency = activeAcc.currency || 'INR';
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
 
@@ -636,7 +636,7 @@
                 return;
             }
 
-            const currency = activeAcc.currency || 'USD';
+            const currency = activeAcc.currency || 'INR';
             let csvRows = [];
             csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')} (${currency})"`);
             csvRows.push(""); 
@@ -697,7 +697,6 @@
             openModal('expense-modal'); 
         }
 
-        // UPDATED: STORES CHOSEN CURRENCY KEY DIRECTLY TO THE DATABASE
         async function saveAccount(e) {
             e.preventDefault();
             const name = document.getElementById('account-name').value.trim();
