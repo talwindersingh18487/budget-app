@@ -287,9 +287,10 @@
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Category Focus</label>
                         <select id="expense-category" onchange="toggleCustomCategoryField()" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12">
-                            <option value="Food & Dining">Food & Dining</option>
-                            <option value="Rent & Utilities">Rent & Utilities</option>
-                            <option value="Transportation">Transportation</option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="Sabzi">Sabzi</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Fruits">Fruits</option>
                             <option value="Supplies & Inventory">Supplies & Inventory</option>
                             <option value="Marketing">Marketing</option>
                             <option value="Other">Other Miscellaneous</option>
@@ -318,7 +319,6 @@
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
-        // GLOBAL FALLBACK KEY RECONFIGURED TO 'INR'
         const formatCurrency = (amount, currencyCode = 'INR') => {
             return new Intl.NumberFormat('en-IN', { 
                 style: 'currency', 
@@ -451,8 +451,6 @@
                 const isActive = acc.id === appState.activeAccountId;
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
-                
-                // FALLBACK KEY ASSIGNED TO INR
                 const currency = acc.currency || 'INR';
                 
                 const card = document.createElement('div');
@@ -500,13 +498,11 @@
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
 
-            // Filter Funding Data
             let filteredFunding = [...activeAcc.funding];
             if (startDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) >= new Date(startDateStr));
             if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
             filteredFunding.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-            // Filter Expense Data
             let filteredExpenses = [...activeAcc.expenses];
             if (startDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) >= new Date(startDateStr));
             if (endDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) <= new Date(endDateStr));
@@ -518,11 +514,9 @@
             fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal, currency);
             expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0), currency);
 
-            // Toggle empty display notifications
             document.getElementById('no-funding-msg').classList.toggle('hidden', filteredFunding.length > 0);
             document.getElementById('no-expenses-msg').classList.toggle('hidden', filteredExpenses.length > 0);
 
-            // Populate Funding Addition Rows
             filteredFunding.forEach(f => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -532,7 +526,6 @@
                 fundingBody.appendChild(tr);
             });
 
-            // Populate Expense Rows
             filteredExpenses.forEach(exp => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -544,7 +537,6 @@
             });
         }
 
-        // --- POPUP WINDOW CASH ADDITIONS LOG ENGINE ---
         function openFundingLogWindow() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -630,7 +622,6 @@
             logWindow.document.close();
         }
 
-        // --- CSV EXPORT CONVERTOR ENGINE ---
         function exportToCSV() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -644,7 +635,6 @@
             csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')} (${currency})"`);
             csvRows.push(""); 
 
-            // Section 1: Funding Logs
             csvRows.push('"CASH ADDITIONS HISTORY"');
             csvRows.push('"Date Added","Injected Amount"');
             if (activeAcc.funding.length === 0) {
@@ -656,7 +646,6 @@
             }
             csvRows.push(""); 
 
-            // Section 2: Operational Expenses
             csvRows.push('"OPERATIONAL EXPENSE LEDGER"');
             csvRows.push('"Category Focus","Transaction Date","Expense Amount"');
             if (activeAcc.expenses.length === 0) {
@@ -680,7 +669,6 @@
             document.body.removeChild(link);
         }
 
-        // --- PDF REPORT PRINTER ENGINE ---
         function exportToPDF() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             window.print();
@@ -749,12 +737,7 @@
             
             try {
                 const { error } = await _supabase.from('accounts').insert([{ 
-                    id, 
-                    name, 
-                    funds: initialFunds, 
-                    currency: currency, 
-                    user_id: currentUser.id, 
-                    organization_id: activeOrganization.id 
+                    id, name, funds: initialFunds, currency: currency, user_id: currentUser.id, organization_id: activeOrganization.id 
                 }]);
                 if(error) throw error;
                 closeModal('account-modal'); pullDatabaseData();
