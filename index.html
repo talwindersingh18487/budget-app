@@ -149,7 +149,6 @@
                     </div>
                 </div>
 
-                <!-- UPDATED FILTER CONTAINER: ADDED CATEGORY FILTER DROPDOWN -->
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 date-filter-container">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-filter text-slate-400 text-sm"></i>
@@ -219,10 +218,12 @@
         </div>
     </div>
 
+    <!-- ACCOUNT PORTFOLIO MODAL (SUPPORTS CAPTURED EDIT STATES) -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
+            <h3 id="account-modal-title" class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
             <form id="account-form" onsubmit="saveAccount(event)">
+                <input type="hidden" id="edit-account-id">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Description Name</label>
@@ -247,7 +248,7 @@
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" onclick="closeModal('account-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
-                    <button type="submit" class="px-4 py-2.5 text-white bg-blue-600 rounded-xl text-sm font-medium">Save Account</button>
+                    <button type="submit" id="account-submit-btn" class="px-4 py-2.5 text-white bg-blue-600 rounded-xl text-sm font-medium">Save Account</button>
                 </div>
             </form>
         </div>
@@ -275,10 +276,12 @@
         </div>
     </div>
 
+    <!-- EXPENSE ENTRY MODAL (SUPPORTS CAPTURED EDIT STATES) -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">Log Line Expense</h3>
+            <h3 id="expense-modal-title" class="text-lg font-bold text-slate-900 mb-4">Log Line Expense</h3>
             <form id="expense-form" onsubmit="saveExpense(event)">
+                <input type="hidden" id="edit-expense-id">
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -304,7 +307,7 @@
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" onclick="closeModal('expense-modal')" class="px-4 py-2.5 text-slate-500 bg-slate-100 rounded-xl text-sm font-medium">Cancel</button>
-                    <button type="submit" class="px-4 py-2.5 text-white bg-slate-900 rounded-xl text-sm font-medium">Log Row</button>
+                    <button type="submit" id="expense-submit-btn" class="px-4 py-2.5 text-white bg-slate-900 rounded-xl text-sm font-medium">Log Row</button>
                 </div>
             </form>
         </div>
@@ -362,7 +365,6 @@
             document.getElementById('actions-dropdown-box').classList.toggle('hidden');
         }
 
-        // UPDATED: CLEAR FILTERS NOW TARGETS CATEGORY SELECTION AS WELL
         function clearAllFilters() {
             document.getElementById('filter-start-date').value = '';
             document.getElementById('filter-end-date').value = '';
@@ -444,18 +446,15 @@
                     appState.activeAccountId = appState.accounts[0].id;
                 }
                 
-                // Populate Category Filter options dynamically based on active data
                 updateCategoryFilterDropdown();
                 render();
             } catch (err) { console.error(err); }
         }
 
-        // NEW ENGINE FUNCTION: DYNAMICALLY ADDS DISCOVERED CATEGORIES TO SELECT DOM ELEMENT
         function updateCategoryFilterDropdown() {
             const categorySelect = document.getElementById('filter-category');
             const savedValue = categorySelect.value;
             
-            // Collect all unique categories across current ledger accounts
             const allCategories = new Set();
             appState.accounts.forEach(acc => {
                 acc.expenses.forEach(exp => {
@@ -463,7 +462,6 @@
                 });
             });
 
-            // Rebuild selection tree
             categorySelect.innerHTML = '<option value="">All Categories</option>';
             Array.from(allCategories).sort().forEach(cat => {
                 const opt = document.createElement('option');
@@ -472,7 +470,6 @@
                 categorySelect.appendChild(opt);
             });
 
-            // Retain selection if valid
             if (allCategories.has(savedValue)) {
                 categorySelect.value = savedValue;
             }
@@ -492,7 +489,7 @@
                 card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
                 
                 card.innerHTML = `
-                    <div onclick="appState.activeAccountId = '${acc.id}'; updateCategoryFilterDropdown(); render();" class="flex-1">
+                    <div onclick="appState.activeAccountId = '${acc.id}'; updateCategoryFilterDropdown(); render();" class="flex-1 min-w-0 pr-2">
                         <div class="flex items-center gap-1.5">
                             <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
                             <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
@@ -500,9 +497,14 @@
                         <p class="text-xs text-slate-500 mt-0.5">Seed Base: ${formatCurrency(acc.funds, currency)}</p>
                         <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses, currency)}</span>
                     </div>
-                    <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition pl-2">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>`;
+                    <div class="flex items-center gap-2">
+                        <button onclick="openEditAccountModal('${acc.id}', event)" class="text-slate-300 hover:text-blue-600 transition" title="Edit Account">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition" title="Delete Account">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>`;
                 listContainer.appendChild(card);
             });
 
@@ -534,13 +536,11 @@
             const endDateStr = document.getElementById('filter-end-date').value;
             const targetCategory = document.getElementById('filter-category').value;
 
-            // Filter Funding Data
             let filteredFunding = [...activeAcc.funding];
             if (startDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) >= new Date(startDateStr));
             if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
             filteredFunding.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-            // Filter Expense Data (UPDATED: Added Category Filtering logic check)
             let filteredExpenses = [...activeAcc.expenses];
             if (startDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) >= new Date(startDateStr));
             if (endDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) <= new Date(endDateStr));
@@ -571,7 +571,10 @@
                     <td class="py-3 px-4 font-semibold text-slate-900">${exp.category}</td>
                     <td class="py-3 px-4 text-slate-500">${exp.date}</td>
                     <td class="py-3 px-4 font-bold text-rose-600">-${formatCurrency(exp.amount, currency)}</td>
-                    <td class="py-3 px-4 text-right"><button onclick="deleteExpense('${exp.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button></td>`;
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="openEditExpenseModal('${exp.id}')" class="text-slate-300 hover:text-blue-600 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteExpense('${exp.id}')" class="text-slate-300 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>`;
                 expensesBody.appendChild(tr);
             });
         }
@@ -715,32 +718,90 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function openAccountModal() { document.getElementById('account-form').reset(); openModal('account-modal'); }
+        
+        // OPEN ACCOUNT PORTFOLIO (NEW ACTIONS SETUP FOR CREATION VS EDITING)
+        function openAccountModal() { 
+            document.getElementById('account-form').reset(); 
+            document.getElementById('edit-account-id').value = '';
+            document.getElementById('account-currency').disabled = false;
+            document.getElementById('account-modal-title').innerText = "Create Account Portfolio";
+            document.getElementById('account-submit-btn').innerText = "Save Account";
+            openModal('account-modal'); 
+        }
+
+        function openEditAccountModal(accountId, event) {
+            if(event) event.stopPropagation();
+            const targetAcc = appState.accounts.find(a => a.id === accountId);
+            if (!targetAcc) return;
+
+            document.getElementById('edit-account-id').value = targetAcc.id;
+            document.getElementById('account-name').value = targetAcc.name;
+            document.getElementById('account-initial-funds').value = targetAcc.funds;
+            document.getElementById('account-currency').value = targetAcc.currency || 'INR';
+            document.getElementById('account-currency').disabled = true; // Currency locked to safeguard transactions integrity
+
+            document.getElementById('account-modal-title').innerText = "Update Account Portfolio";
+            document.getElementById('account-submit-btn').innerText = "Update Details";
+            openModal('account-modal');
+        }
+
         function openFundsModal() { 
             document.getElementById('funds-form').reset(); 
             document.getElementById('fund-date').value = new Date().toISOString().split('T')[0];
             openModal('funds-modal'); 
         }
+
+        // OPEN EXPENSE MANAGEMENT (NEW ACTIONS SETUP FOR ADD ROW VS EDIT ROW)
         function openExpenseModal() { 
             document.getElementById('expense-form').reset(); 
+            document.getElementById('edit-expense-id').value = '';
             document.getElementById('expense-date').value = new Date().toISOString().split('T')[0]; 
+            document.getElementById('expense-modal-title').innerText = "Log Line Expense";
+            document.getElementById('expense-submit-btn').innerText = "Log Row";
             openModal('expense-modal'); 
         }
 
+        function openEditExpenseModal(expenseId) {
+            const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
+            if(!activeAcc) return;
+            const targetExp = activeAcc.expenses.find(e => e.id === expenseId);
+            if(!targetExp) return;
+
+            document.getElementById('edit-expense-id').value = targetExp.id;
+            document.getElementById('expense-amount').value = targetExp.amount;
+            document.getElementById('expense-date').value = targetExp.date;
+            document.getElementById('expense-category').value = targetExp.category;
+
+            document.getElementById('expense-modal-title').innerText = "Modify Expense Entry";
+            document.getElementById('expense-submit-btn').innerText = "Save Changes";
+            openModal('expense-modal');
+        }
+
+        // SAVE / UPDATE ACCOUNT ROUTER ENGINE
         async function saveAccount(e) {
             e.preventDefault();
+            const editId = document.getElementById('edit-account-id').value;
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
             const currency = document.getElementById('account-currency').value;
-            const id = 'acc_' + Date.now().toString(36);
             
             try {
-                const { error } = await _supabase.from('accounts').insert([{ 
-                    id, name, funds: initialFunds, currency, user_id: currentUser.id, organization_id: activeOrganization.id 
-                }]);
-                if(error) throw error;
+                if (editId) {
+                    // Update Mode Execution
+                    const { error } = await _supabase.from('accounts')
+                        .update({ name, funds: initialFunds })
+                        .eq('id', editId);
+                    if(error) throw error;
+                } else {
+                    // Creation Mode Execution
+                    const id = 'acc_' + Date.now().toString(36);
+                    const { error } = await _supabase.from('accounts').insert([{ 
+                        id, name, funds: initialFunds, currency, user_id: currentUser.id, organization_id: activeOrganization.id 
+                    }]);
+                    if(error) throw error;
+                }
                 closeModal('account-modal'); pullDatabaseData();
-            } catch(err) { alert("Save Account Failed:\n" + err.message); }
+            } catch(err) { alert("Account Action Modification Failed:\n" + err.message); }
         }
 
         async function deleteAccount(accountId, event) {
@@ -785,20 +846,32 @@
             }
         }
 
+        // SAVE / UPDATE EXPENSE ROUTER ENGINE
         async function saveExpense(e) {
             e.preventDefault();
+            const editId = document.getElementById('edit-expense-id').value;
             const amount = parseFloat(document.getElementById('expense-amount').value);
             const date = document.getElementById('expense-date').value;
+            const category = document.getElementById('expense-category').value;
+            
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
             if (!activeAcc) return;
 
-            const category = document.getElementById('expense-category').value;
             try {
-                const { error } = await _supabase.from('expenses').insert([{ 
-                    id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
-                    user_id: currentUser.id, organization_id: activeOrganization.id
-                }]);
-                if(error) throw error;
+                if (editId) {
+                    // Update Mode Execution
+                    const { error } = await _supabase.from('expenses')
+                        .update({ amount, date, category })
+                        .eq('id', editId);
+                    if(error) throw error;
+                } else {
+                    // Creation Mode Execution
+                    const { error } = await _supabase.from('expenses').insert([{ 
+                        id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
+                        user_id: currentUser.id, organization_id: activeOrganization.id
+                    }]);
+                    if(error) throw error;
+                }
                 closeModal('expense-modal'); pullDatabaseData();
             } catch(err) { alert("Save Expense Failed:\n" + err.message); }
         }
