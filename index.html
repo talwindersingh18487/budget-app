@@ -149,16 +149,22 @@
                     </div>
                 </div>
 
+                <!-- UPDATED FILTER CONTAINER: ADDED CATEGORY FILTER DROPDOWN -->
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-4 date-filter-container">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-days text-slate-400 text-sm"></i>
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter Range:</span>
+                        <i class="fa-solid fa-filter text-slate-400 text-sm"></i>
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filters:</span>
                     </div>
-                    <div class="flex items-center gap-2 flex-1 min-w-[240px]">
+                    <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[240px]">
                         <input type="date" id="filter-start-date" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none">
                         <span class="text-slate-400 text-xs">to</span>
                         <input type="date" id="filter-end-date" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none">
-                        <button onclick="clearDateFilters()" class="text-xs text-blue-600 hover:underline font-medium ml-1">Clear</button>
+                        
+                        <select id="filter-category" onchange="renderActiveAccountDashboard()" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none font-medium min-w-[130px]">
+                            <option value="">All Categories</option>
+                        </select>
+
+                        <button onclick="clearAllFilters()" class="text-xs text-blue-600 hover:underline font-medium ml-auto">Clear All</button>
                     </div>
                 </div>
 
@@ -314,7 +320,6 @@
         let appState = { accounts: [], activeAccountId: null };
         let authMode = 'signin';
 
-        // GLOBAL FALLBACK KEY RECONFIGURED TO 'INR'
         const formatCurrency = (amount, currencyCode = 'INR') => {
             return new Intl.NumberFormat('en-IN', { 
                 style: 'currency', 
@@ -357,9 +362,11 @@
             document.getElementById('actions-dropdown-box').classList.toggle('hidden');
         }
 
-        function clearDateFilters() {
+        // UPDATED: CLEAR FILTERS NOW TARGETS CATEGORY SELECTION AS WELL
+        function clearAllFilters() {
             document.getElementById('filter-start-date').value = '';
             document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-category').value = '';
             renderActiveAccountDashboard();
         }
 
@@ -436,8 +443,39 @@
                 if (appState.accounts.length > 0 && !appState.activeAccountId) {
                     appState.activeAccountId = appState.accounts[0].id;
                 }
+                
+                // Populate Category Filter options dynamically based on active data
+                updateCategoryFilterDropdown();
                 render();
             } catch (err) { console.error(err); }
+        }
+
+        // NEW ENGINE FUNCTION: DYNAMICALLY ADDS DISCOVERED CATEGORIES TO SELECT DOM ELEMENT
+        function updateCategoryFilterDropdown() {
+            const categorySelect = document.getElementById('filter-category');
+            const savedValue = categorySelect.value;
+            
+            // Collect all unique categories across current ledger accounts
+            const allCategories = new Set();
+            appState.accounts.forEach(acc => {
+                acc.expenses.forEach(exp => {
+                    if (exp.category) allCategories.add(exp.category);
+                });
+            });
+
+            // Rebuild selection tree
+            categorySelect.innerHTML = '<option value="">All Categories</option>';
+            Array.from(allCategories).sort().forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                categorySelect.appendChild(opt);
+            });
+
+            // Retain selection if valid
+            if (allCategories.has(savedValue)) {
+                categorySelect.value = savedValue;
+            }
         }
 
         function render() {
@@ -448,14 +486,13 @@
                 const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
                 const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
                 
-                // FALLBACK KEY ASSIGNED TO INR
                 const currency = acc.currency || 'INR';
                 
                 const card = document.createElement('div');
                 card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
                 
                 card.innerHTML = `
-                    <div onclick="appState.activeAccountId = '${acc.id}'; render();" class="flex-1">
+                    <div onclick="appState.activeAccountId = '${acc.id}'; updateCategoryFilterDropdown(); render();" class="flex-1">
                         <div class="flex items-center gap-1.5">
                             <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
                             <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
@@ -495,6 +532,7 @@
 
             const startDateStr = document.getElementById('filter-start-date').value;
             const endDateStr = document.getElementById('filter-end-date').value;
+            const targetCategory = document.getElementById('filter-category').value;
 
             // Filter Funding Data
             let filteredFunding = [...activeAcc.funding];
@@ -502,10 +540,11 @@
             if (endDateStr) filteredFunding = filteredFunding.filter(f => new Date(f.date) <= new Date(endDateStr));
             filteredFunding.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-            // Filter Expense Data
+            // Filter Expense Data (UPDATED: Added Category Filtering logic check)
             let filteredExpenses = [...activeAcc.expenses];
             if (startDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) >= new Date(startDateStr));
             if (endDateStr) filteredExpenses = filteredExpenses.filter(e => new Date(e.date) <= new Date(endDateStr));
+            if (targetCategory) filteredExpenses = filteredExpenses.filter(e => e.category === targetCategory);
             filteredExpenses.sort((a,b) => new Date(b.date) - new Date(a.date));
 
             const totalAddedFunds = activeAcc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
@@ -514,11 +553,9 @@
             fundsDisplay.innerText = formatCurrency(activeAcc.funds + totalAddedFunds - totalExpensesTotal, currency);
             expensesDisplay.innerText = formatCurrency(filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0), currency);
 
-            // Toggle empty display notifications
             document.getElementById('no-funding-msg').classList.toggle('hidden', filteredFunding.length > 0);
             document.getElementById('no-expenses-msg').classList.toggle('hidden', filteredExpenses.length > 0);
 
-            // Populate Funding Addition Rows
             filteredFunding.forEach(f => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -528,7 +565,6 @@
                 fundingBody.appendChild(tr);
             });
 
-            // Populate Expense Rows (FIXED: Template literal variable parsing evaluates correctly with $)
             filteredExpenses.forEach(exp => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -540,7 +576,6 @@
             });
         }
 
-        // --- POPUP WINDOW CASH ADDITIONS LOG ENGINE ---
         function openFundingLogWindow() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -626,7 +661,6 @@
             logWindow.document.close();
         }
 
-        // --- CSV EXPORT CONVERTOR ENGINE ---
         function exportToCSV() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             const activeAcc = appState.accounts.find(a => a.id === appState.activeAccountId);
@@ -640,7 +674,6 @@
             csvRows.push(`"WealthFlow Ledger Export: ${activeAcc.name.replace(/"/g, '""')} (${currency})"`);
             csvRows.push(""); 
 
-            // Section 1: Funding Logs
             csvRows.push('"CASH ADDITIONS HISTORY"');
             csvRows.push('"Date Added","Injected Amount"');
             if (activeAcc.funding.length === 0) {
@@ -652,7 +685,6 @@
             }
             csvRows.push(""); 
 
-            // Section 2: Operational Expenses
             csvRows.push('"OPERATIONAL EXPENSE LEDGER"');
             csvRows.push('"Category Focus","Transaction Date","Expense Amount"');
             if (activeAcc.expenses.length === 0) {
@@ -676,7 +708,6 @@
             document.body.removeChild(link);
         }
 
-        // --- PDF REPORT PRINTER ENGINE ---
         function exportToPDF() {
             document.getElementById('actions-dropdown-box').classList.add('hidden');
             window.print();
@@ -705,12 +736,7 @@
             
             try {
                 const { error } = await _supabase.from('accounts').insert([{ 
-                    id, 
-                    name, 
-                    funds: initialFunds, 
-                    currency: currency, 
-                    user_id: currentUser.id, 
-                    organization_id: activeOrganization.id 
+                    id, name, funds: initialFunds, currency, user_id: currentUser.id, organization_id: activeOrganization.id 
                 }]);
                 if(error) throw error;
                 closeModal('account-modal'); pullDatabaseData();
@@ -755,7 +781,7 @@
                 await pullDatabaseData();
             } catch (err) {
                 console.error("Supabase Injection Rejection:", err);
-                alert(`Database Rejection Error:\n${err.message}\n\nEnsure Row Level Security (RLS) contains an INSERT allow statement for funding_logs.`);
+                alert(`Database Rejection Error:\n${err.message}`);
             }
         }
 
