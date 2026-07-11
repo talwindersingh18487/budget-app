@@ -102,7 +102,7 @@
                 </div>
 
                 <button onclick="openAccountModal()" class="flex-1 md:flex-none bg-blue-600 active:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Account
+                    <i class="fa-solid fa-plus"></i> Account/Sub-Account
                 </button>
                 <button onclick="handleSignOut()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition">
                     <i class="fa-solid fa-right-from-bracket"></i>
@@ -218,13 +218,19 @@
         </div>
     </div>
 
-    <!-- ACCOUNT PORTFOLIO MODAL (SUPPORTS CAPTURED EDIT STATES) -->
+    <!-- ACCOUNT / SUB-ACCOUNT MODAL -->
     <div id="account-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 id="account-modal-title" class="text-lg font-bold text-slate-900 mb-4">Create Account Portfolio</h3>
             <form id="account-form" onsubmit="saveAccount(event)">
                 <input type="hidden" id="edit-account-id">
                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Parent Hierarchy Relation</label>
+                        <select id="account-parent-id" onchange="handleParentSelectionChange()" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none h-12 text-sm font-semibold">
+                            <option value="">Standalone / Main Account Node</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Account Description Name</label>
                         <input type="text" id="account-name" required placeholder="e.g., Primary Cash Vault" class="w-full px-4 py-3 rounded-xl border bg-slate-50 focus:outline-none">
@@ -276,7 +282,6 @@
         </div>
     </div>
 
-    <!-- EXPENSE ENTRY MODAL (SUPPORTS CAPTURED EDIT STATES) -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <h3 id="expense-modal-title" class="text-lg font-bold text-slate-900 mb-4">Log Line Expense</h3>
@@ -447,8 +452,41 @@
                 }
                 
                 updateCategoryFilterDropdown();
+                populateParentAccountDropdown();
                 render();
             } catch (err) { console.error(err); }
+        }
+
+        function populateParentAccountDropdown(editingAccountId = null) {
+            const dropdown = document.getElementById('account-parent-id');
+            dropdown.innerHTML = '<option value="">Standalone / Main Account Node</option>';
+            
+            // Only allow standalone main accounts to be designated as parents to keep the structure clean
+            const prospectiveParents = appState.accounts.filter(a => !a.parent_id && a.id !== editingAccountId);
+            
+            prospectiveParents.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = `${p.name} (${p.currency || 'INR'})`;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        function handleParentSelectionChange() {
+            const parentId = document.getElementById('account-parent-id').value;
+            const currencySelect = document.getElementById('account-currency');
+            
+            if (parentId) {
+                const parentAcc = appState.accounts.find(a => a.id === parentId);
+                if (parentAcc) {
+                    currencySelect.value = parentAcc.currency || 'INR';
+                    currencySelect.disabled = true; // Sub-accounts inherit the base currency constraints of their parent
+                }
+            } else {
+                if (!document.getElementById('edit-account-id').value) {
+                    currencySelect.disabled = false;
+                }
+            }
         }
 
         function updateCategoryFilterDropdown() {
@@ -475,40 +513,58 @@
             }
         }
 
+        function getAccountComputedBalance(acc) {
+            const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
+            return acc.funds + totalAddedFunds - totalExpenses;
+        }
+
         function render() {
             const listContainer = document.getElementById('accounts-list');
             listContainer.innerHTML = '';
-            appState.accounts.forEach(acc => {
-                const isActive = acc.id === appState.activeAccountId;
-                const totalExpenses = acc.expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-                const totalAddedFunds = acc.funding.reduce((sum, f) => sum + parseFloat(f.amount), 0);
-                
-                const currency = acc.currency || 'INR';
-                
-                const card = document.createElement('div');
-                card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`;
-                
-                card.innerHTML = `
-                    <div onclick="appState.activeAccountId = '${acc.id}'; updateCategoryFilterDropdown(); render();" class="flex-1 min-w-0 pr-2">
-                        <div class="flex items-center gap-1.5">
-                            <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
-                            <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-0.5">Seed Base: ${formatCurrency(acc.funds, currency)}</p>
-                        <span class="text-xs font-bold text-slate-700 block mt-1">${formatCurrency(acc.funds + totalAddedFunds - totalExpenses, currency)}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openEditAccountModal('${acc.id}', event)" class="text-slate-300 hover:text-blue-600 transition" title="Edit Account">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition" title="Delete Account">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>`;
-                listContainer.appendChild(card);
-            });
+            
+            // Separate master parent accounts from sub-accounts
+            const mainAccounts = appState.accounts.filter(a => !a.parent_id);
+            const subAccounts = appState.accounts.filter(a => a.parent_id);
 
-            renderActiveAccountDashboard();
+            mainAccounts.forEach(acc => {
+                renderAccountCard(acc, listContainer, false);
+                
+                // Fetch and render sub-accounts directly below the parent context
+                const children = subAccounts.filter(child => child.parent_id === acc.id);
+                children.forEach(child => {
+                    renderAccountCard(child, listContainer, true);
+                });
+            });
+        }
+
+        function renderAccountCard(acc, container, isSubAccount = false) {
+            const isActive = acc.id === appState.activeAccountId;
+            const computedBalance = getAccountComputedBalance(acc);
+            const currency = acc.currency || 'INR';
+
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isSubAccount ? 'ml-6 bg-slate-50/50 border-dashed' : 'bg-white'} ${isActive ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : 'border-slate-100 hover:bg-slate-50'}`;
+            
+            card.innerHTML = `
+                <div onclick="appState.activeAccountId = '${acc.id}'; updateCategoryFilterDropdown(); render();" class="flex-1 min-w-0 pr-2">
+                    <div class="flex items-center gap-1.5">
+                        ${isSubAccount ? '<i class="fa-solid fa-turn-up rotate-90 text-slate-400 text-xs mr-0.5"></i>' : ''}
+                        <h4 class="font-bold text-slate-900 text-sm truncate">${acc.name}</h4>
+                        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">${currency}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5 ${isSubAccount ? 'ml-4' : ''}">Seed Base: ${formatCurrency(acc.funds, currency)}</p>
+                    <span class="text-xs font-bold text-slate-700 block mt-1 ${isSubAccount ? 'ml-4' : ''}">${formatCurrency(computedBalance, currency)}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openEditAccountModal('${acc.id}', event)" class="text-slate-300 hover:text-blue-600 transition" title="Edit Account">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteAccount('${acc.id}', event)" class="text-slate-300 hover:text-rose-600 transition" title="Delete Account">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>`;
+            container.appendChild(card);
         }
 
         function renderActiveAccountDashboard() {
@@ -719,13 +775,14 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
-        // OPEN ACCOUNT PORTFOLIO (NEW ACTIONS SETUP FOR CREATION VS EDITING)
         function openAccountModal() { 
             document.getElementById('account-form').reset(); 
             document.getElementById('edit-account-id').value = '';
             document.getElementById('account-currency').disabled = false;
+            document.getElementById('account-parent-id').disabled = false;
             document.getElementById('account-modal-title').innerText = "Create Account Portfolio";
             document.getElementById('account-submit-btn').innerText = "Save Account";
+            populateParentAccountDropdown();
             openModal('account-modal'); 
         }
 
@@ -734,11 +791,17 @@
             const targetAcc = appState.accounts.find(a => a.id === accountId);
             if (!targetAcc) return;
 
+            populateParentAccountDropdown(accountId);
+
             document.getElementById('edit-account-id').value = targetAcc.id;
+            document.getElementById('account-parent-id').value = targetAcc.parent_id || '';
             document.getElementById('account-name').value = targetAcc.name;
             document.getElementById('account-initial-funds').value = targetAcc.funds;
             document.getElementById('account-currency').value = targetAcc.currency || 'INR';
-            document.getElementById('account-currency').disabled = true; // Currency locked to safeguard transactions integrity
+            
+            // Lock foundational constraints during editing to secure transactional histories
+            document.getElementById('account-currency').disabled = true; 
+            document.getElementById('account-parent-id').disabled = true; 
 
             document.getElementById('account-modal-title').innerText = "Update Account Portfolio";
             document.getElementById('account-submit-btn').innerText = "Update Details";
@@ -751,7 +814,6 @@
             openModal('funds-modal'); 
         }
 
-        // OPEN EXPENSE MANAGEMENT (NEW ACTIONS SETUP FOR ADD ROW VS EDIT ROW)
         function openExpenseModal() { 
             document.getElementById('expense-form').reset(); 
             document.getElementById('edit-expense-id').value = '';
@@ -777,26 +839,30 @@
             openModal('expense-modal');
         }
 
-        // SAVE / UPDATE ACCOUNT ROUTER ENGINE
         async function saveAccount(e) {
             e.preventDefault();
             const editId = document.getElementById('edit-account-id').value;
+            const parentId = document.getElementById('account-parent-id').value.trim() || null;
             const name = document.getElementById('account-name').value.trim();
             const initialFunds = parseFloat(document.getElementById('account-initial-funds').value) || 0;
             const currency = document.getElementById('account-currency').value;
             
             try {
                 if (editId) {
-                    // Update Mode Execution
                     const { error } = await _supabase.from('accounts')
                         .update({ name, funds: initialFunds })
                         .eq('id', editId);
                     if(error) throw error;
                 } else {
-                    // Creation Mode Execution
                     const id = 'acc_' + Date.now().toString(36);
                     const { error } = await _supabase.from('accounts').insert([{ 
-                        id, name, funds: initialFunds, currency, user_id: currentUser.id, organization_id: activeOrganization.id 
+                        id, 
+                        parent_id: parentId,
+                        name, 
+                        funds: initialFunds, 
+                        currency, 
+                        user_id: currentUser.id, 
+                        organization_id: activeOrganization.id 
                     }]);
                     if(error) throw error;
                 }
@@ -806,6 +872,14 @@
 
         async function deleteAccount(accountId, event) {
             event.stopPropagation(); 
+            
+            // Check if this is a main account with sub-accounts attached
+            const childAccounts = appState.accounts.filter(a => a.parent_id === accountId);
+            if (childAccounts.length > 0) {
+                alert("Cannot delete a Main Account that contains active Sub-Accounts. Remove or reassign the sub-accounts first.");
+                return;
+            }
+
             if (confirm("Permanently erase this ledger account? All corresponding history row logs will be wiped out automatically.")) {
                 try {
                     const { error } = await _supabase.from('accounts').delete().eq('id', accountId);
@@ -846,7 +920,6 @@
             }
         }
 
-        // SAVE / UPDATE EXPENSE ROUTER ENGINE
         async function saveExpense(e) {
             e.preventDefault();
             const editId = document.getElementById('edit-expense-id').value;
@@ -859,13 +932,11 @@
 
             try {
                 if (editId) {
-                    // Update Mode Execution
                     const { error } = await _supabase.from('expenses')
                         .update({ amount, date, category })
                         .eq('id', editId);
                     if(error) throw error;
                 } else {
-                    // Creation Mode Execution
                     const { error } = await _supabase.from('expenses').insert([{ 
                         id: 'exp_' + Date.now().toString(36), account_id: activeAcc.id, amount, date, category, 
                         user_id: currentUser.id, organization_id: activeOrganization.id
